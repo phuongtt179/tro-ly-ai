@@ -32,8 +32,9 @@ async function searchHistory(userId, data) {
 
   // Xây dựng filter cho journals
   const journalFilters = [];
-  // Xây dựng filter cho tasks
+  // Xây dựng filter cho tasks và schedule
   const taskFilters = [{ field: 'status', op: '==', value: 'done' }];
+  const scheduleFilters = [{ field: 'status', op: '==', value: 'done' }];
 
   if (targetDate) {
     const start = targetDate.toISOString();
@@ -42,12 +43,15 @@ async function searchHistory(userId, data) {
     journalFilters.push({ field: 'createdAt', op: '<', value: end });
     taskFilters.push({ field: 'completedAt', op: '>=', value: start });
     taskFilters.push({ field: 'completedAt', op: '<', value: end });
+    scheduleFilters.push({ field: 'completedAt', op: '>=', value: start });
+    scheduleFilters.push({ field: 'completedAt', op: '<', value: end });
   }
 
   // Lấy dữ liệu song song
-  const [journals, tasks] = await Promise.all([
+  const [journals, tasks, schedules] = await Promise.all([
     queryDocs(userId, 'journals', journalFilters, { field: 'createdAt', direction: 'desc' }, 100),
     queryDocs(userId, 'tasks', taskFilters, { field: 'completedAt', direction: 'desc' }, 100),
+    queryDocs(userId, 'schedule', scheduleFilters, { field: 'completedAt', direction: 'desc' }, 100),
   ]);
 
   // Lọc theo từ khóa nếu có
@@ -58,8 +62,11 @@ async function searchHistory(userId, data) {
   const matchedTasks = kw
     ? tasks.filter((t) => t.content?.toLowerCase().includes(kw))
     : tasks;
+  const matchedSchedules = kw
+    ? schedules.filter((s) => s.content?.toLowerCase().includes(kw))
+    : schedules;
 
-  if (matchedJournals.length === 0 && matchedTasks.length === 0) {
+  if (matchedJournals.length === 0 && matchedTasks.length === 0 && matchedSchedules.length === 0) {
     const kwStr = keyword ? `"${keyword}"` : '';
     const dateStr = targetDate
       ? targetDate.toLocaleDateString('vi-VN', { day: 'numeric', month: 'long', timeZone: 'Asia/Ho_Chi_Minh' })
@@ -71,6 +78,7 @@ async function searchHistory(userId, data) {
   const results = [
     ...matchedJournals.map((j) => ({ type: 'journal', content: j.content, time: j.createdAt })),
     ...matchedTasks.map((t) => ({ type: 'task', content: t.content, time: t.completedAt })),
+    ...matchedSchedules.map((s) => ({ type: 'schedule', content: s.content, time: s.completedAt })),
   ].sort((a, b) => new Date(b.time) - new Date(a.time));
 
   // Format kết quả
@@ -93,7 +101,7 @@ async function searchHistory(userId, data) {
           timeZone: 'Asia/Ho_Chi_Minh',
         })
       : '';
-    const icon = r.type === 'journal' ? '📔' : '✅';
+    const icon = r.type === 'journal' ? '📔' : r.type === 'schedule' ? '📅' : '✅';
     msg += `${icon} ${timeStr}\n   ${r.content}\n\n`;
   });
 
