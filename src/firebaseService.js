@@ -30,9 +30,9 @@ function initFirebase() {
     credential = admin.credential.cert(serviceAccount);
   } else {
     // Local: dùng file path
-    const serviceAccountPath =
-      process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-      path.join(__dirname, '..', 'firebase-service-account.json');
+    const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+      ? path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
+      : path.join(__dirname, '..', 'firebase-service-account.json');
     const serviceAccount = require(serviceAccountPath);
     credential = admin.credential.cert(serviceAccount);
   }

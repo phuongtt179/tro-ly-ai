@@ -60,6 +60,7 @@ async function createReminder(userId, chatId, data) {
     remindAt: remindAt.toISOString(),
     chatId: String(chatId),
     status: 'pending',
+    reminderSent: false,
   });
 
   const timeStr = remindAt.toLocaleString('vi-VN', {
@@ -116,4 +117,16 @@ async function listReminders(userId) {
   return msg;
 }
 
-module.exports = { createReminder, listReminders, getRemindersToday };
+/**
+ * Lấy reminders theo ngày bất kỳ (dùng cho tomorrow_overview)
+ */
+async function getRemindersByDate(userId, date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString();
+  return await queryDocs(userId, 'reminders', [
+    { field: 'remindAt', op: '>=', value: start },
+    { field: 'remindAt', op: '<', value: end },
+  ], { field: 'remindAt', direction: 'asc' });
+}
+
+module.exports = { createReminder, listReminders, getRemindersToday, getRemindersByDate };

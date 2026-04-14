@@ -4,6 +4,7 @@
  */
 
 const { addDoc, queryDocs, updateDoc } = require('../firebaseService');
+const { createReminder } = require('./reminderService');
 
 /**
  * Resolve date string sang ISO date string
@@ -31,8 +32,8 @@ function resolveDate(dateStr) {
 /**
  * Tạo task mới
  */
-async function createTask(userId, data) {
-  const { content, priority = 'medium', date, tags = [] } = data;
+async function createTask(userId, chatId, data) {
+  const { content, priority = 'medium', date, time, tags = [] } = data;
 
   if (!content) return '📋 Bạn muốn tạo task gì?';
 
@@ -53,7 +54,15 @@ async function createTask(userId, data) {
     timeZone: 'Asia/Ho_Chi_Minh',
   });
 
-  return `✅ *Đã tạo task:*\n\n${priorityEmoji[priority] || '🟡'} ${content}\n📅 Hạn: ${dueDateStr}\n⚡ Ưu tiên: ${priority}`;
+  let msg = `✅ *Đã tạo task:*\n\n${priorityEmoji[priority] || '🟡'} ${content}\n📅 Hạn: ${dueDateStr}\n⚡ Ưu tiên: ${priority}`;
+
+  // Nếu có giờ cụ thể → tự tạo reminder
+  if (time && chatId) {
+    await createReminder(userId, chatId, { content, time, date });
+    msg += `\n🔔 Đã đặt nhắc lúc ${time}`;
+  }
+
+  return msg;
 }
 
 /**
@@ -106,6 +115,18 @@ async function updateTask(userId, data) {
 
   await updateDoc(userId, 'tasks', match.id, updateData);
   return `✏️ Đã cập nhật task: *${match.content}*`;
+}
+
+/**
+ * Lấy tasks theo ngày bất kỳ (dùng cho tomorrow_overview)
+ */
+async function getTasksByDate(userId, date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString();
+  return await queryDocs(userId, 'tasks', [
+    { field: 'dueDate', op: '>=', value: start },
+    { field: 'dueDate', op: '<', value: end },
+  ], { field: 'createdAt', direction: 'asc' });
 }
 
 /**
@@ -180,7 +201,7 @@ async function listTasksWeek(userId) {
   }
 
   let msg = `📋 *TASK TUẦN NÀY (${tasks.length})*\n\n`;
-  tasks.forEach((t, i) => {
+  tasks.forEach((t) => {
     const status = t.status === 'done' ? '✅' : '⬜';
     const date = new Date(t.dueDate).toLocaleDateString('vi-VN', {
       weekday: 'short',
@@ -202,4 +223,5 @@ module.exports = {
   listTasksWeek,
   getTasksToday,
   getTasksWeek,
+  getTasksByDate,
 };

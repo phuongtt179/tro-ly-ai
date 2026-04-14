@@ -22,16 +22,23 @@ NHIỆM VỤ:
 DANH SÁCH INTENT:
 - create_journal: Ghi nhật ký, ghi lại cảm xúc/sự kiện hôm nay
 - get_journal: Xem lại nhật ký cũ
-- create_task: Tạo công việc cần làm
+- create_task: Tạo 1 công việc cần làm (không có ngày cụ thể trong tuần)
 - update_task: Cập nhật công việc
-- complete_task: Đánh dấu hoàn thành công việc
+- complete_task: Đánh dấu hoàn thành công việc (task thông thường)
 - list_tasks_today: Xem danh sách việc hôm nay
 - list_tasks_week: Xem danh sách việc tuần này
-- create_reminder: Tạo nhắc việc (có thời gian cụ thể)
+- create_reminder: Tạo nhắc việc đơn lẻ (có thời gian cụ thể)
 - list_reminders: Xem danh sách nhắc việc
-- today_overview: Tổng quan hôm nay (task + reminder + plan)
+- today_overview: Tổng quan hôm nay (task + lịch công tác + reminder)
+- tomorrow_overview: Tổng quan ngày mai
 - week_overview: Tổng quan tuần này
-- create_plan: Tạo kế hoạch
+- create_plan: Tạo kế hoạch dài hạn
+- create_schedule: Nhập lịch công tác (1 hoặc nhiều việc có ngày trong tuần)
+- add_schedule: Thêm 1 việc vào lịch công tác
+- list_schedule: Xem lịch công tác (hôm nay/ngày mai/tuần này/tuần tới)
+- update_schedule: Sửa 1 việc trong lịch công tác
+- delete_schedule: Xóa 1 việc khỏi lịch công tác
+- complete_schedule: Đánh dấu hoàn thành việc trong lịch công tác
 - unknown: Không xác định được intent
 
 FORMAT OUTPUT (JSON CHUẨN):
@@ -41,9 +48,18 @@ FORMAT OUTPUT (JSON CHUẨN):
     "content": "nội dung chính",
     "time": "HH:MM (nếu có)",
     "date": "today|tomorrow|YYYY-MM-DD (nếu có)",
+    "day": "thứ 2|thứ 3|thứ 4|thứ 5|thứ 6|thứ 7|chủ nhật (nếu có)",
+    "week": "this|next (mặc định next nếu nói tuần tới)",
     "priority": "high|medium|low (nếu có)",
     "tags": ["tag1", "tag2"],
-    "title": "tiêu đề (nếu là plan)"
+    "title": "tiêu đề (nếu là plan)",
+    "new_content": "nội dung mới khi sửa",
+    "note": "ghi chú thêm nếu có",
+    "period": "week|next_week|today|tomorrow (khi xem lịch)",
+    "items": [
+      {"day": "thứ 2", "content": "nội dung", "time": "HH:MM", "note": "ghi chú"},
+      {"day": "thứ 3", "content": "nội dung", "time": null, "note": null}
+    ]
   }
 }
 
@@ -55,17 +71,32 @@ Output: {"intent":"create_reminder","data":{"content":"họp tổ","time":"15:00
 Input: "Hôm nay tôi dạy học mệt quá"
 Output: {"intent":"create_journal","data":{"content":"Hôm nay tôi dạy học mệt quá"}}
 
-Input: "Cần soạn giáo án cho tiết thứ 4 tuần sau"
-Output: {"intent":"create_task","data":{"content":"Soạn giáo án tiết thứ 4","date":"next_week","priority":"medium"}}
-
 Input: "Hôm nay tôi cần làm gì"
 Output: {"intent":"today_overview","data":{}}
 
-Input: "Xem lại nhật ký hôm qua"
-Output: {"intent":"get_journal","data":{"date":"yesterday"}}
+Input: "Ngày mai tôi có gì"
+Output: {"intent":"tomorrow_overview","data":{}}
 
-Input: "Tạo kế hoạch ôn thi cuối kỳ"
-Output: {"intent":"create_plan","data":{"title":"Ôn thi cuối kỳ"}}
+Input: "Xem lịch tuần tới"
+Output: {"intent":"list_schedule","data":{"period":"next_week"}}
+
+Input: "Xem lịch hôm nay"
+Output: {"intent":"list_schedule","data":{"period":"today"}}
+
+Input: "Lịch công tác tuần tới:\n- Thứ 2: họp hội đồng 7h30\n- Thứ 3: dạy bù tiết 3\n- Thứ 5: kiểm tra 1 tiết lớp 11A\n- Thứ 6: nộp báo cáo tháng"
+Output: {"intent":"create_schedule","data":{"week":"next","items":[{"day":"thứ 2","content":"họp hội đồng","time":"07:30","note":null},{"day":"thứ 3","content":"dạy bù tiết 3","time":null,"note":null},{"day":"thứ 5","content":"kiểm tra 1 tiết lớp 11A","time":null,"note":null},{"day":"thứ 6","content":"nộp báo cáo tháng","time":null,"note":null}]}}
+
+Input: "Thêm vào lịch thứ 4 tuần tới họp phụ huynh 18h"
+Output: {"intent":"add_schedule","data":{"day":"thứ 4","content":"họp phụ huynh","time":"18:00","week":"next"}}
+
+Input: "Sửa lịch họp hội đồng thành 8h"
+Output: {"intent":"update_schedule","data":{"content":"họp hội đồng","time":"08:00"}}
+
+Input: "Xóa lịch dạy bù thứ 3"
+Output: {"intent":"delete_schedule","data":{"content":"dạy bù"}}
+
+Input: "Xong việc họp hội đồng rồi"
+Output: {"intent":"complete_schedule","data":{"content":"họp hội đồng"}}
 
 Input: "Xong việc soạn giáo án rồi"
 Output: {"intent":"complete_task","data":{"content":"soạn giáo án"}}
@@ -93,7 +124,7 @@ async function processMessage(userMessage) {
         ],
         generationConfig: {
           temperature: 0.1, // Thấp để output ổn định
-          maxOutputTokens: 512,
+          maxOutputTokens: 1024,
         },
       },
       {
