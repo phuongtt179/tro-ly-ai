@@ -25,13 +25,13 @@ DANH SÁCH INTENT:
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
 - search_history: Tìm kiếm lịch sử hoạt động (nhật ký + task đã hoàn thành) theo từ khóa hoặc ngày
-- create_task: Tạo 1 công việc cần làm (không có ngày cụ thể trong tuần)
+- create_task: Tạo công việc cần làm. Dùng khi người dùng nói về 1 hoạt động/công việc cụ thể, kể cả khi có giờ đứng trước (vd: "15h họp hội đồng", "8h mai soạn giáo án"). Nếu có giờ, hệ thống sẽ tự tạo nhắc việc.
 - update_task: Cập nhật công việc (nội dung, ưu tiên, deadline)
 - delete_task: Xóa công việc
 - complete_task: Đánh dấu hoàn thành công việc (task thông thường)
 - list_tasks_today: Xem danh sách việc hôm nay
 - list_tasks_week: Xem danh sách việc tuần này
-- create_reminder: Tạo nhắc việc đơn lẻ (có thời gian cụ thể)
+- create_reminder: CHỈ dùng khi người dùng nói rõ "nhắc tôi", "nhắc mình", "nhớ nhắc" — là những việc vặt chỉ cần thông báo, không cần theo dõi (uống thuốc, sạc xe, gọi điện...)
 - update_reminder: Sửa nhắc việc (thời gian hoặc nội dung)
 - delete_reminder: Xóa nhắc việc
 - list_reminders: Xem danh sách nhắc việc
@@ -71,6 +71,18 @@ FORMAT OUTPUT (JSON CHUẨN):
 }
 
 VÍ DỤ:
+
+Input: "Chiều mai 3h họp tổ"
+Output: {"intent":"create_task","data":{"content":"họp tổ","time":"15:00","date":"tomorrow"}}
+
+Input: "15h tháo biển tên trường mầm non"
+Output: {"intent":"create_task","data":{"content":"tháo biển tên trường mầm non","time":"15:00","date":"today"}}
+
+Input: "8h mai soạn giáo án"
+Output: {"intent":"create_task","data":{"content":"soạn giáo án","time":"08:00","date":"tomorrow"}}
+
+Input: "Nhắc tôi uống thuốc lúc 9h"
+Output: {"intent":"create_reminder","data":{"content":"uống thuốc","time":"09:00","date":"today"}}
 
 Input: "Chiều mai 3h họp tổ nhớ nhắc tôi"
 Output: {"intent":"create_reminder","data":{"content":"họp tổ","time":"15:00","date":"tomorrow"}}
@@ -149,6 +161,12 @@ Output: {"intent":"search_history","data":{"keyword":"giáo án","date":"yesterd
 
 Input: "8 giờ tối nay nhắc tôi gọi điện cho phụ huynh"
 Output: {"intent":"create_reminder","data":{"content":"gọi điện cho phụ huynh","time":"20:00","date":"today"}}
+
+Input: "Nhắc tôi sạc xe lúc 13h"
+Output: {"intent":"create_reminder","data":{"content":"sạc xe","time":"13:00","date":"today"}}
+
+Input: "20h nay họp phụ huynh online"
+Output: {"intent":"create_task","data":{"content":"họp phụ huynh online","time":"20:00","date":"today"}}
 
 USER INPUT: "${userMessage}"`;
 }
