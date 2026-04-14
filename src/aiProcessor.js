@@ -24,6 +24,7 @@ DANH SÁCH INTENT:
 - get_journal: Xem lại nhật ký cũ
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
+- search_history: Tìm kiếm lịch sử hoạt động (nhật ký + task đã hoàn thành) theo từ khóa hoặc ngày
 - create_task: Tạo 1 công việc cần làm (không có ngày cụ thể trong tuần)
 - update_task: Cập nhật công việc (nội dung, ưu tiên, deadline)
 - delete_task: Xóa công việc
@@ -130,6 +131,21 @@ Output: {"intent":"delete_reminder","data":{"content":"sạc xe điện"}}
 
 Input: "Xóa kế hoạch ôn thi cuối kỳ"
 Output: {"intent":"delete_plan","data":{"content":"ôn thi cuối kỳ"}}
+
+Input: "Tìm giáo án"
+Output: {"intent":"search_history","data":{"keyword":"giáo án"}}
+
+Input: "Tìm lại việc đã làm hôm qua"
+Output: {"intent":"search_history","data":{"date":"yesterday"}}
+
+Input: "Hôm nay tôi đã làm gì?"
+Output: {"intent":"search_history","data":{"date":"today"}}
+
+Input: "Tìm nhật ký có họp"
+Output: {"intent":"search_history","data":{"keyword":"họp"}}
+
+Input: "Tìm việc giáo án hôm qua"
+Output: {"intent":"search_history","data":{"keyword":"giáo án","date":"yesterday"}}
 
 Input: "8 giờ tối nay nhắc tôi gọi điện cho phụ huynh"
 Output: {"intent":"create_reminder","data":{"content":"gọi điện cho phụ huynh","time":"20:00","date":"today"}}

@@ -8,6 +8,7 @@ const taskService = require('./services/taskService');
 const reminderService = require('./services/reminderService');
 const planService = require('./services/planService');
 const scheduleService = require('./services/scheduleService');
+const historyService = require('./services/historyService');
 
 /**
  * Route action dựa vào intent từ AI
@@ -27,6 +28,8 @@ async function routeAction(aiResult, userId, chatId) {
       return await journalService.updateJournal(userId, data);
     case 'delete_journal':
       return await journalService.deleteJournal(userId, data);
+    case 'search_history':
+      return await historyService.searchHistory(userId, data);
 
     // === CÔNG VIỆC ===
     case 'create_task':
