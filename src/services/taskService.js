@@ -82,7 +82,22 @@ async function completeTask(userId, data) {
   const match = tasks.find((t) => t.content.toLowerCase().includes(keyword));
 
   if (!match) {
-    return `❌ Không tìm thấy task "${content}" trong danh sách.`;
+    // Fallback: tìm trong reminders
+    const reminders = await queryDocs(userId, 'reminders', [
+      { field: 'status', op: '==', value: 'pending' },
+    ]);
+    const reminderMatch = reminders.find((r) => r.content.toLowerCase().includes(keyword));
+
+    if (!reminderMatch) {
+      return `❌ Không tìm thấy "${content}" trong task hay nhắc việc.`;
+    }
+
+    await updateDoc(userId, 'reminders', reminderMatch.id, {
+      status: 'done',
+      completedAt: new Date().toISOString(),
+    });
+
+    return `🎉 *Hoàn thành nhắc việc:* ${reminderMatch.content}\n\nTuyệt vời! Cứ tiếp tục nhé! 💪`;
   }
 
   await updateDoc(userId, 'tasks', match.id, {

@@ -26,11 +26,11 @@ function initScheduler() {
  */
 async function checkAndSendReminders() {
   const now = new Date();
-  const oneMinuteLater = new Date(now.getTime() + 60 * 1000);
+  const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
 
   await Promise.all([
-    checkCollection('reminders', now, oneMinuteLater, '🔔 *NHẮC VIỆC*'),
-    checkCollection('schedule', now, oneMinuteLater, '📅 *NHẮC LỊCH CÔNG TÁC*'),
+    checkCollection('reminders', oneMinuteAgo, now, '🔔 *NHẮC VIỆC*'),
+    checkCollection('schedule', oneMinuteAgo, now, '📅 *NHẮC LỊCH CÔNG TÁC*'),
   ]);
 }
 
