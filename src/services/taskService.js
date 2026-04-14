@@ -3,7 +3,7 @@
  * Quản lý công việc (to-do)
  */
 
-const { addDoc, queryDocs, updateDoc } = require('../firebaseService');
+const { addDoc, queryDocs, updateDoc, deleteDoc } = require('../firebaseService');
 const { createReminder } = require('./reminderService');
 
 /**
@@ -125,11 +125,32 @@ async function updateTask(userId, data) {
   if (!match) return `❌ Không tìm thấy task "${content}"`;
 
   const updateData = {};
+  if (data.new_content) updateData.content = data.new_content;
   if (priority) updateData.priority = priority;
   if (date) updateData.dueDate = resolveDate(date);
 
   await updateDoc(userId, 'tasks', match.id, updateData);
-  return `✏️ Đã cập nhật task: *${match.content}*`;
+  return `✏️ Đã cập nhật task: *${data.new_content || match.content}*`;
+}
+
+/**
+ * Xóa task
+ */
+async function deleteTask(userId, data) {
+  const { content } = data;
+  if (!content) return '❓ Task nào bạn muốn xóa?';
+
+  const tasks = await queryDocs(userId, 'tasks', [
+    { field: 'status', op: '==', value: 'pending' },
+  ]);
+
+  const keyword = content.toLowerCase();
+  const match = tasks.find((t) => t.content.toLowerCase().includes(keyword));
+
+  if (!match) return `❌ Không tìm thấy task "${content}".`;
+
+  await deleteDoc(userId, 'tasks', match.id);
+  return `🗑 Đã xóa task: *${match.content}*`;
 }
 
 /**
@@ -234,6 +255,7 @@ module.exports = {
   createTask,
   completeTask,
   updateTask,
+  deleteTask,
   listTasksToday,
   listTasksWeek,
   getTasksToday,

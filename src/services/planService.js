@@ -3,7 +3,7 @@
  * Quản lý kế hoạch
  */
 
-const { addDoc, queryDocs } = require('../firebaseService');
+const { addDoc, queryDocs, deleteDoc } = require('../firebaseService');
 
 /**
  * Tạo kế hoạch mới
@@ -51,4 +51,23 @@ async function listPlans(userId) {
   return msg;
 }
 
-module.exports = { createPlan, listPlans };
+/**
+ * Xóa kế hoạch
+ */
+async function deletePlan(userId, data) {
+  const { content } = data;
+  if (!content) return '❓ Kế hoạch nào bạn muốn xóa?';
+
+  const plans = await queryDocs(userId, 'plans', [
+    { field: 'status', op: '==', value: 'active' },
+  ]);
+
+  const keyword = content.toLowerCase();
+  const match = plans.find((p) => p.title.toLowerCase().includes(keyword));
+  if (!match) return `❌ Không tìm thấy kế hoạch "${content}".`;
+
+  await deleteDoc(userId, 'plans', match.id);
+  return `🗑 Đã xóa kế hoạch: *${match.title}*`;
+}
+
+module.exports = { createPlan, listPlans, deletePlan };

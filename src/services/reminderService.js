@@ -3,7 +3,7 @@
  * Quản lý nhắc việc - lưu Firestore và scheduler sẽ gửi đúng giờ
  */
 
-const { addDoc, queryDocs } = require('../firebaseService');
+const { addDoc, queryDocs, updateDoc, deleteDoc } = require('../firebaseService');
 
 /**
  * Parse thời gian từ data AI trả về
@@ -129,4 +129,66 @@ async function getRemindersByDate(userId, date) {
   ], { field: 'remindAt', direction: 'asc' });
 }
 
-module.exports = { createReminder, listReminders, getRemindersToday, getRemindersByDate };
+/**
+ * Sửa nhắc việc (thời gian hoặc nội dung)
+ */
+async function updateReminder(userId, data) {
+  const { content, new_content, time, date } = data;
+  if (!content) return '❓ Nhắc việc nào bạn muốn sửa?';
+
+  const reminders = await queryDocs(userId, 'reminders', [
+    { field: 'status', op: '==', value: 'pending' },
+  ]);
+
+  const keyword = content.toLowerCase();
+  const match = reminders.find((r) => r.content.toLowerCase().includes(keyword));
+  if (!match) return `❌ Không tìm thấy nhắc việc "${content}".`;
+
+  const updateData = {};
+  if (new_content) updateData.content = new_content;
+
+  if (time || date) {
+    const newRemindAt = parseReminderTime({
+      time: time || match.time,
+      date: date || match.remindAt?.split('T')[0],
+    });
+    if (newRemindAt <= new Date()) return '⚠️ Thời gian nhắc phải là trong tương lai nhé!';
+    updateData.remindAt = newRemindAt.toISOString();
+    updateData.reminderSent = false;
+  }
+
+  await updateDoc(userId, 'reminders', match.id, updateData);
+
+  const updatedContent = new_content || match.content;
+  const timeStr = updateData.remindAt
+    ? new Date(updateData.remindAt).toLocaleString('vi-VN', {
+        weekday: 'long', day: 'numeric', month: 'long',
+        hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh',
+      })
+    : null;
+
+  let msg = `✏️ *Đã sửa nhắc việc:*\n\n📌 ${updatedContent}`;
+  if (timeStr) msg += `\n⏰ ${timeStr}`;
+  return msg;
+}
+
+/**
+ * Xóa nhắc việc
+ */
+async function deleteReminder(userId, data) {
+  const { content } = data;
+  if (!content) return '❓ Nhắc việc nào bạn muốn xóa?';
+
+  const reminders = await queryDocs(userId, 'reminders', [
+    { field: 'status', op: '==', value: 'pending' },
+  ]);
+
+  const keyword = content.toLowerCase();
+  const match = reminders.find((r) => r.content.toLowerCase().includes(keyword));
+  if (!match) return `❌ Không tìm thấy nhắc việc "${content}".`;
+
+  await deleteDoc(userId, 'reminders', match.id);
+  return `🗑 Đã xóa nhắc việc: *${match.content}*`;
+}
+
+module.exports = { createReminder, listReminders, getRemindersToday, getRemindersByDate, updateReminder, deleteReminder };

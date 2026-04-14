@@ -3,7 +3,7 @@
  * Quản lý nhật ký cá nhân
  */
 
-const { addDoc, queryDocs } = require('../firebaseService');
+const { addDoc, queryDocs, updateDoc, deleteDoc } = require('../firebaseService');
 
 /**
  * Ghi nhật ký mới
@@ -87,4 +87,56 @@ async function getJournal(userId, data) {
   return msg;
 }
 
-module.exports = { createJournal, getJournal };
+/**
+ * Tìm journal theo ngày và keyword (dùng chung cho update/delete)
+ */
+async function findJournal(userId, data) {
+  const { date, content } = data;
+
+  let targetDate = new Date();
+  if (date === 'yesterday') {
+    targetDate.setDate(targetDate.getDate() - 1);
+  } else if (date && date !== 'today') {
+    targetDate = new Date(date);
+  }
+
+  const targetDateStr = targetDate.toISOString().split('T')[0];
+  const journals = await queryDocs(userId, 'journals', [], { field: 'createdAt', direction: 'desc' }, 50);
+  const dayJournals = journals.filter((j) => (j.createdAt?.split('T')[0] || '') === targetDateStr);
+
+  if (dayJournals.length === 0) return null;
+
+  if (content) {
+    const keyword = content.toLowerCase();
+    return dayJournals.find((j) => j.content.toLowerCase().includes(keyword)) || dayJournals[0];
+  }
+
+  return dayJournals[0];
+}
+
+/**
+ * Sửa nội dung nhật ký
+ */
+async function updateJournal(userId, data) {
+  const { new_content } = data;
+  if (!new_content) return '📝 Nội dung mới là gì?';
+
+  const match = await findJournal(userId, data);
+  if (!match) return '📔 Không tìm thấy nhật ký để sửa.';
+
+  await updateDoc(userId, 'journals', match.id, { content: new_content });
+  return `✏️ *Đã sửa nhật ký:*\n\n"${new_content}"`;
+}
+
+/**
+ * Xóa nhật ký
+ */
+async function deleteJournal(userId, data) {
+  const match = await findJournal(userId, data);
+  if (!match) return '📔 Không tìm thấy nhật ký để xóa.';
+
+  await deleteDoc(userId, 'journals', match.id);
+  return `🗑 Đã xóa nhật ký:\n\n"${match.content}"`;
+}
+
+module.exports = { createJournal, getJournal, updateJournal, deleteJournal };

@@ -22,17 +22,23 @@ NHIỆM VỤ:
 DANH SÁCH INTENT:
 - create_journal: Ghi nhật ký, ghi lại cảm xúc/sự kiện hôm nay
 - get_journal: Xem lại nhật ký cũ
+- update_journal: Sửa nội dung nhật ký
+- delete_journal: Xóa nhật ký
 - create_task: Tạo 1 công việc cần làm (không có ngày cụ thể trong tuần)
-- update_task: Cập nhật công việc
+- update_task: Cập nhật công việc (nội dung, ưu tiên, deadline)
+- delete_task: Xóa công việc
 - complete_task: Đánh dấu hoàn thành công việc (task thông thường)
 - list_tasks_today: Xem danh sách việc hôm nay
 - list_tasks_week: Xem danh sách việc tuần này
 - create_reminder: Tạo nhắc việc đơn lẻ (có thời gian cụ thể)
+- update_reminder: Sửa nhắc việc (thời gian hoặc nội dung)
+- delete_reminder: Xóa nhắc việc
 - list_reminders: Xem danh sách nhắc việc
 - today_overview: Tổng quan hôm nay (task + lịch công tác + reminder)
 - tomorrow_overview: Tổng quan ngày mai
 - week_overview: Tổng quan tuần này
 - create_plan: Tạo kế hoạch dài hạn
+- delete_plan: Xóa kế hoạch
 - create_schedule: Nhập lịch công tác (1 hoặc nhiều việc có ngày trong tuần)
 - add_schedule: Thêm 1 việc vào lịch công tác
 - list_schedule: Xem lịch công tác (hôm nay/ngày mai/tuần này/tuần tới)
@@ -100,6 +106,30 @@ Output: {"intent":"complete_schedule","data":{"content":"họp hội đồng"}}
 
 Input: "Xong việc soạn giáo án rồi"
 Output: {"intent":"complete_task","data":{"content":"soạn giáo án"}}
+
+Input: "Xóa task soạn giáo án"
+Output: {"intent":"delete_task","data":{"content":"soạn giáo án"}}
+
+Input: "Đổi task soạn giáo án thành soạn bài kiểm tra"
+Output: {"intent":"update_task","data":{"content":"soạn giáo án","new_content":"soạn bài kiểm tra"}}
+
+Input: "Sửa nhật ký hôm nay thành hôm nay đi họp mệt quá"
+Output: {"intent":"update_journal","data":{"date":"today","new_content":"hôm nay đi họp mệt quá"}}
+
+Input: "Xóa nhật ký hôm qua"
+Output: {"intent":"delete_journal","data":{"date":"yesterday"}}
+
+Input: "Đổi nhắc sạc xe sang 14h"
+Output: {"intent":"update_reminder","data":{"content":"sạc xe","time":"14:00"}}
+
+Input: "Sửa nhắc sạc xe thành sạc máy tính"
+Output: {"intent":"update_reminder","data":{"content":"sạc xe","new_content":"sạc máy tính"}}
+
+Input: "Xóa nhắc việc sạc xe điện"
+Output: {"intent":"delete_reminder","data":{"content":"sạc xe điện"}}
+
+Input: "Xóa kế hoạch ôn thi cuối kỳ"
+Output: {"intent":"delete_plan","data":{"content":"ôn thi cuối kỳ"}}
 
 Input: "8 giờ tối nay nhắc tôi gọi điện cho phụ huynh"
 Output: {"intent":"create_reminder","data":{"content":"gọi điện cho phụ huynh","time":"20:00","date":"today"}}

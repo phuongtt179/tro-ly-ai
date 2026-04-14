@@ -23,12 +23,18 @@ async function routeAction(aiResult, userId, chatId) {
       return await journalService.createJournal(userId, data);
     case 'get_journal':
       return await journalService.getJournal(userId, data);
+    case 'update_journal':
+      return await journalService.updateJournal(userId, data);
+    case 'delete_journal':
+      return await journalService.deleteJournal(userId, data);
 
     // === CÔNG VIỆC ===
     case 'create_task':
       return await taskService.createTask(userId, chatId, data);
     case 'update_task':
       return await taskService.updateTask(userId, data);
+    case 'delete_task':
+      return await taskService.deleteTask(userId, data);
     case 'complete_task':
       return await taskService.completeTask(userId, data);
     case 'list_tasks_today':
@@ -39,12 +45,18 @@ async function routeAction(aiResult, userId, chatId) {
     // === NHẮC VIỆC ===
     case 'create_reminder':
       return await reminderService.createReminder(userId, chatId, data);
+    case 'update_reminder':
+      return await reminderService.updateReminder(userId, data);
+    case 'delete_reminder':
+      return await reminderService.deleteReminder(userId, data);
     case 'list_reminders':
       return await reminderService.listReminders(userId);
 
     // === KẾ HOẠCH ===
     case 'create_plan':
       return await planService.createPlan(userId, data);
+    case 'delete_plan':
+      return await planService.deletePlan(userId, data);
 
     // === LỊCH CÔNG TÁC ===
     case 'create_schedule': {
