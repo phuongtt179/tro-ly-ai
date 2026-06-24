@@ -22,16 +22,27 @@ NHIỆM VỤ:
 DANH SÁCH INTENT:
 NK - NHẬT KÝ (prefix: "NK" hoặc không có prefix nhưng là kể sự kiện/cảm xúc):
 - create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc hàng ngày)
-- get_journal: Xem nhật ký (hôm nay, hôm qua, khoảng ngày)
+- get_journal: Xem nhật ký một ngày cụ thể (hôm nay, hôm qua, YYYY-MM-DD)
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
-- search_journal: Tìm nhật ký theo từ khóa hoặc khoảng thời gian (tuần, tháng, năm)
+- search_journal: Tìm nhật ký - CÓ THỂ:
+  * Theo từ khóa: "TÌM NK HỌP" → {keyword: "họp"}
+  * Theo ngày: "TÌM NK HÔM QUA" → {period: "yesterday"}
+  * Theo tuần: "TÌM NK TUẦN NÀY" → {week: "this", period: "week"}
+  * Theo tháng: "TÌM NK THÁNG 6" → {month: 6, period: "month"}
+  * Theo năm: "TÌM NK NĂM 2025" → {year: 2025, period: "year"}
+  * Kết hợp: "TÌM NK HỌP TUẦN NÀY" → {keyword: "họp", week: "this", period: "week"}
 
 TL - TÀI LIỆU (prefix: "TL" hoặc là lưu link/ghi chú lâu dài):
-- create_document: Lưu tài liệu (dùng khi gõ "TL ..." hoặc gửi file/link). Phân loại: type (text|link|file), category (giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác)
-- get_documents: Xem danh sách tất cả tài liệu hoặc theo danh mục
-- search_document: Tìm tài liệu theo từ khóa hoặc danh mục
-- delete_document: Xóa tài liệu
+- create_document: Lưu tài liệu (dùng khi gõ "TL ..." hoặc gửi file/link). Auto-classify:
+  * type: text|link|file
+  * category: giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác
+- get_documents: Xem danh sách tất cả tài liệu hoặc theo danh mục cụ thể
+- search_document: Tìm tài liệu - CÓ THỂ:
+  * Theo từ khóa: "TÌM TL GIÁO ÁN" → {keyword: "giáo án"}
+  * Theo danh mục: "TÌM TL DANH MỤC BÁO CÁO" → {category: "báo_cáo"}
+  * Kết hợp: "TÌM TL GIÁO ÁN #TUẦN 3" → {keyword: "giáo án", tags: ["tuần 3"]}
+- delete_document: Xóa tài liệu theo tên/mô tả
 
 UNKNOWN:
 - unknown: Không xác định được intent
