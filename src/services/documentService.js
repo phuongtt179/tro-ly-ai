@@ -50,7 +50,9 @@ async function createDocument(userId, data) {
     typeText = '[Text]';
   }
 
-  const responseMsg = `✅ Đã lưu tài liệu "${description.substring(0, 50)}" ${typeText}\n_Danh mục: ${category}_`;
+  // Escape underscores cho Markdown
+  const escapedCategory = category.replace(/_/g, '\\_');
+  const responseMsg = `✅ Đã lưu tài liệu "${description.substring(0, 50)}" ${typeText}\n_Danh mục: ${escapedCategory}_`;
   console.log(`[DOCUMENT] Created successfully. Response:`, responseMsg);
   return responseMsg;
 }
