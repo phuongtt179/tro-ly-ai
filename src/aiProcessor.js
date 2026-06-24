@@ -94,10 +94,19 @@ Output: {"intent":"create_document","data":{"content":"đây là công thức t�
 Input: "tl https://example.com tài liệu tham khảo toán"
 Output: {"intent":"create_document","data":{"url":"https://example.com","description":"tài liệu tham khảo toán","type":"link","category":"tham_khảo"}}
 
+Input: "tl ghi chú công thức tính lương"
+Output: {"intent":"create_document","data":{"content":"ghi chú công thức tính lương","type":"text","category":"khác"}}
+
 Input: "Xem TL"
 Output: {"intent":"get_documents","data":{}}
 
+Input: "xem tl"
+Output: {"intent":"get_documents","data":{}}
+
 Input: "Tìm TL giáo án"
+Output: {"intent":"search_document","data":{"keyword":"giáo án"}}
+
+Input: "tìm tl giáo án"
 Output: {"intent":"search_document","data":{"keyword":"giáo án"}}
 
 Input: "Tìm TL danh mục báo cáo"
