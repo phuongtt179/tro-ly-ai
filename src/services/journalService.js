@@ -60,7 +60,9 @@ async function getJournal(userId, data) {
   // Lọc theo ngày (so sánh chuỗi date đầu)
   const targetDateStr = targetDate.toISOString().split('T')[0];
   const dayJournals = journals.filter((j) => {
-    const jDate = j.createdAt?.split('T')[0] || '';
+    // Convert Timestamp to string
+    const jDateStr = j.createdAt?.toDate?.()?.toISOString?.() || j.createdAt || '';
+    const jDate = jDateStr.split('T')[0];
     return jDate === targetDateStr;
   });
 
@@ -70,13 +72,15 @@ async function getJournal(userId, data) {
 
   let msg = `📔 *Nhật ký ${dateStr}*\n\n`;
   dayJournals.forEach((j, i) => {
-    const time = j.createdAt
-      ? new Date(j.createdAt).toLocaleTimeString('vi-VN', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Asia/Ho_Chi_Minh',
-        })
-      : '';
+    let time = '';
+    if (j.createdAt) {
+      const date = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
+      time = date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      });
+    }
     msg += `🕐 ${time}\n"${j.content}"\n`;
     if (j.tags && j.tags.length > 0) {
       msg += `🏷 ${j.tags.join(', ')}\n`;
@@ -102,7 +106,10 @@ async function findJournal(userId, data) {
 
   const targetDateStr = targetDate.toISOString().split('T')[0];
   const journals = await queryDocs(userId, 'journals', [], { field: 'createdAt', direction: 'desc' }, 50);
-  const dayJournals = journals.filter((j) => (j.createdAt?.split('T')[0] || '') === targetDateStr);
+  const dayJournals = journals.filter((j) => {
+    const jDateStr = j.createdAt?.toDate?.()?.toISOString?.() || j.createdAt || '';
+    return jDateStr.split('T')[0] === targetDateStr;
+  });
 
   if (dayJournals.length === 0) return null;
 
@@ -190,7 +197,8 @@ async function searchJournal(userId, data) {
   const journals = await queryDocs(userId, 'journals', [], { field: 'createdAt', direction: 'desc' }, 200);
 
   let results = journals.filter((j) => {
-    const jDate = j.createdAt?.split('T')[0] || '';
+    const jDateStr = j.createdAt?.toDate?.()?.toISOString?.() || j.createdAt || '';
+    const jDate = jDateStr.split('T')[0];
     return jDate >= startStr && jDate < endStr;
   });
 
@@ -214,7 +222,8 @@ async function searchJournal(userId, data) {
   let output = `📌 Tìm NK${keyword ? ` "${keyword}"` : ''} ${periodText}: (Tìm thấy ${results.length} NK)\n\n`;
 
   results.forEach((j) => {
-    const date = new Date(j.createdAt).toLocaleDateString('vi-VN');
+    const dateObj = j.createdAt?.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
+    const date = dateObj.toLocaleDateString('vi-VN');
     output += `📅 ${date} - ${j.content.substring(0, 60)}${j.content.length > 60 ? '...' : ''}\n`;
   });
 
