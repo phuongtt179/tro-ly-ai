@@ -35,11 +35,23 @@ async function createDocument(userId, data) {
   await addDoc(userId, 'documents', doc);
 
   let typeText = '';
-  if (type === 'file') typeText = `[${data.file_type?.toUpperCase() || 'File'}]`;
-  else if (type === 'link') typeText = '[Link]';
-  else typeText = '[Text]';
+  if (type === 'file') {
+    // Rút gọn MIME type thành extension
+    let ext = data.file_type?.split('/').pop()?.split('+')[0] || 'file';
+    // Rút gọn các MIME type dài
+    if (ext.includes('wordprocessingml')) ext = 'docx';
+    if (ext.includes('spreadsheetml')) ext = 'xlsx';
+    if (ext.includes('presentationml')) ext = 'pptx';
+    typeText = `[${ext.toUpperCase()}]`;
+  } else if (type === 'link') {
+    typeText = '[Link]';
+  } else {
+    typeText = '[Text]';
+  }
 
-  return `✅ Đã lưu tài liệu "${description.substring(0, 50)}" ${typeText}\n_Danh mục: ${category}_`;
+  const responseMsg = `✅ Đã lưu tài liệu "${description.substring(0, 50)}" ${typeText}\n_Danh mục: ${category}_`;
+  console.log(`[DOCUMENT] Created successfully. Response:`, responseMsg);
+  return responseMsg;
 }
 
 /**
