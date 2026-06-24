@@ -1,30 +1,75 @@
 # 🤖 Bot AI Trợ Lý Cá Nhân
 
 Telegram bot tích hợp AI Gemini 2.5 Flash, Firebase Firestore.
-Hỗ trợ: ghi nhật ký, quản lý task, nhắc việc, lập kế hoạch.
+
+---
+
+## ✨ Chức năng
+
+| Chức năng | Lệnh ví dụ |
+|---|---|
+| **📔 NHẬT KÝ** | |
+| Ghi nhật ký | `Hôm nay dạy mệt quá` |
+| Xem nhật ký | `Xem lại nhật ký hôm qua` |
+| Sửa nhật ký | `Sửa nhật ký hôm nay thành hôm nay đi họp mệt quá` |
+| Xóa nhật ký | `Xóa nhật ký hôm qua` |
+| **📋 CÔNG VIỆC (TASK)** | |
+| Tạo task | `Cần soạn giáo án cho ngày mai` |
+| Tạo task kèm giờ | `3h chiều soạn giáo án` _(tự đặt reminder)_ |
+| Sửa task | `Đổi task soạn giáo án thành soạn bài kiểm tra` |
+| Xóa task | `Xóa task soạn giáo án` |
+| Hoàn thành task | `Xong task soạn giáo án rồi` |
+| Xem task hôm nay | `Hôm nay cần làm gì?` |
+| Xem task tuần này | `Task tuần này có gì?` |
+| **🔔 NHẮC VIỆC (REMINDER)** | |
+| Tạo nhắc việc | `3h chiều họp tổ nhớ nhắc tôi` |
+| Tạo nhắc việc ngày mai | `Mai 8h nhắc nộp báo cáo` |
+| Sửa giờ nhắc | `Đổi nhắc sạc xe sang 14h` |
+| Sửa nội dung nhắc | `Sửa nhắc sạc xe thành sạc máy tính` |
+| Xóa nhắc việc | `Xóa nhắc việc sạc xe điện` |
+| Hoàn thành nhắc việc | `Xác nhận đã hoàn thành sạc xe điện` |
+| Xem danh sách | `Xem danh sách nhắc việc` |
+| **📅 LỊCH CÔNG TÁC** | |
+| Nhập lịch cả tuần | `Lịch công tác tuần tới: Thứ 2: họp hội đồng 7h30, Thứ 5: kiểm tra 1 tiết` |
+| Thêm 1 việc | `Thêm vào lịch thứ 4 tuần tới họp phụ huynh 18h` |
+| Sửa lịch | `Sửa lịch họp hội đồng thành 8h` |
+| Xóa lịch | `Xóa lịch dạy bù thứ 3` |
+| Hoàn thành lịch | `Xong việc họp hội đồng rồi` |
+| Xem lịch hôm nay | `Xem lịch hôm nay` |
+| Xem lịch ngày mai | `Xem lịch ngày mai` |
+| Xem lịch tuần này | `Xem lịch tuần này` |
+| Xem lịch tuần tới | `Xem lịch tuần tới` |
+| **📊 TỔNG QUAN** | |
+| Tổng quan hôm nay | `Hôm nay tôi có gì?` _(lịch + task + nhắc việc)_ |
+| Tổng quan ngày mai | `Ngày mai tôi có gì?` |
+| Tổng quan tuần này | `Tuần này tôi có gì?` |
+| **📌 KẾ HOẠCH** | |
+| Tạo kế hoạch | `Tạo kế hoạch ôn thi cuối kỳ` |
+| Xem kế hoạch | `Xem kế hoạch` |
+| Xóa kế hoạch | `Xóa kế hoạch ôn thi cuối kỳ` |
 
 ---
 
 ## 📁 Cấu trúc thư mục
 
 ```
-bot-ai-ca-nhan/
+tro-ly-ai/
 ├── server.js                    # Entry point, Express + webhook
 ├── package.json
 ├── .env                         # Biến môi trường (tạo từ .env.example)
 ├── .env.example
 ├── firebase-service-account.json  # Credential Firebase (KHÔNG commit)
-├── firebase-service-account.example.json
 └── src/
     ├── telegramHandler.js       # Nhận/gửi message Telegram
     ├── aiProcessor.js           # Gọi Gemini API, parse intent
     ├── actionRouter.js          # Điều hướng theo intent
     ├── firebaseService.js       # Helper CRUD Firestore
-    ├── scheduler.js             # Cron job gửi reminder
+    ├── scheduler.js             # Cron job gửi reminder mỗi phút
     └── services/
         ├── journalService.js    # Nhật ký
         ├── taskService.js       # Công việc
         ├── reminderService.js   # Nhắc việc
+        ├── scheduleService.js   # Lịch công tác
         └── planService.js       # Kế hoạch
 ```
 
@@ -48,25 +93,15 @@ bot-ai-ca-nhan/
 2. Tạo project → Firestore Database (chế độ production)
 3. Project Settings → Service Accounts → **Generate new private key**
 4. Lưu file JSON vào `firebase-service-account.json`
-5. Tạo **Composite Index** cho collection `reminders`:
-   - Collection ID: `reminders`
-   - Fields: `status ASC`, `remindAt ASC`
 
 ### 4. Cài đặt local
 
 ```bash
-# Clone / tạo thư mục
 npm install
 
-# Copy và điền thông tin
 cp .env.example .env
 # Sửa .env với các giá trị thực
 
-# Copy service account
-cp firebase-service-account.example.json firebase-service-account.json
-# Thay nội dung bằng file thực từ Firebase Console
-
-# Chạy local (cần ngrok để test webhook)
 npm run dev
 ```
 
@@ -89,16 +124,13 @@ npm run dev
 
 1. Push code lên GitHub (KHÔNG commit `.env` và `firebase-service-account.json`)
 
-2. Vào [render.com](https://render.com/) → New Web Service
+2. Vào [render.com](https://render.com/) → New Web Service → Connect GitHub repo
 
-3. Connect GitHub repo
-
-4. Cài đặt:
+3. Cài đặt:
    - **Build Command:** `npm install`
    - **Start Command:** `npm start`
-   - **Environment:** Node
 
-5. Thêm Environment Variables:
+4. Thêm Environment Variables:
    ```
    TELEGRAM_BOT_TOKEN=xxx
    GEMINI_API_KEY=xxx
@@ -109,22 +141,9 @@ npm run dev
    ```
    > `FIREBASE_SERVICE_ACCOUNT_JSON`: paste toàn bộ nội dung JSON service account (1 dòng)
 
-6. Deploy → lấy URL → tự động đăng ký webhook
+5. Deploy → lấy URL → tự động đăng ký webhook
 
----
-
-## 💬 Ví dụ dùng bot
-
-| Bạn nói | Bot làm |
-|---------|---------|
-| `Hôm nay dạy mệt quá` | Ghi nhật ký |
-| `Cần soạn giáo án cho ngày mai` | Tạo task deadline ngày mai |
-| `3h chiều họp tổ nhớ nhắc tôi` | Đặt reminder 15:00 hôm nay |
-| `Hôm nay cần làm gì?` | Tổng quan ngày |
-| `Xem lại nhật ký hôm qua` | Hiển thị nhật ký ngày hôm qua |
-| `Xong task soạn giáo án rồi` | Đánh dấu hoàn thành |
-| `Task tuần này có gì?` | Danh sách task 7 ngày tới |
-| `Tạo kế hoạch ôn thi cuối kỳ` | Tạo plan mới |
+6. Dùng [UptimeRobot](https://uptimerobot.com) ping URL mỗi 5 phút để Render không ngủ
 
 ---
 
@@ -132,17 +151,24 @@ npm run dev
 
 Vào Firebase Console → Firestore → Indexes → Add Index:
 
-| Collection | Field 1 | Field 2 | Query scope |
-|-----------|---------|---------|-------------|
-| reminders | status (ASC) | remindAt (ASC) | Collection group |
-| tasks | dueDate (ASC) | status (ASC) | Collection |
+| Collection | Fields | Query scope |
+|---|---|---|
+| `reminders` | `status` ASC + `remindAt` ASC | Collection group |
+| `reminders` | `reminderSent` ASC + `remindAt` ASC | Collection group |
+| `schedule` | `reminderSent` ASC + `remindAt` ASC | Collection group |
 
 ---
 
 ## 🐛 Xử lý lỗi thường gặp
 
+**Bot không phản hồi:**
+- Render free tier tự ngủ sau 15 phút — dùng UptimeRobot để giữ server luôn chạy
+
+**Reminder không gửi đúng giờ:**
+- Kiểm tra Firestore Indexes đã tạo đủ và status là Enabled chưa
+
 **Webhook không nhận được message:**
-- Kiểm tra WEBHOOK_URL đúng chưa
+- Kiểm tra `WEBHOOK_URL` đúng chưa
 - Đảm bảo server public (không chạy local mà thiếu ngrok)
 
 **Firebase lỗi permission:**
@@ -150,5 +176,5 @@ Vào Firebase Console → Firestore → Indexes → Add Index:
 - Đảm bảo service account có quyền Firestore
 
 **AI không parse được:**
-- Gemini đôi khi trả markdown - đã có fallback parser
-- Kiểm tra GEMINI_API_KEY còn hạn dùng
+- Gemini đôi khi trả markdown — đã có fallback parser
+- Kiểm tra `GEMINI_API_KEY` còn hạn dùng

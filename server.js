@@ -6,7 +6,6 @@
 require('dotenv').config();
 const express = require('express');
 const { handleUpdate } = require('./src/telegramHandler');
-const { initScheduler } = require('./src/scheduler');
 
 const app = express();
 app.use(express.json());
@@ -17,7 +16,7 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 // Health check endpoint
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Bot AI cá nhân đang chạy' });
+  res.json({ status: 'ok', message: 'Bot AI NK + TL đang chạy' });
 });
 
 // Webhook endpoint - Telegram gửi update vào đây
@@ -43,10 +42,6 @@ app.listen(PORT, async () => {
   } else {
     console.warn('[SERVER] WEBHOOK_URL chưa set - bỏ qua đăng ký webhook');
   }
-
-  // Khởi động scheduler kiểm tra reminder
-  initScheduler();
-  console.log('[SERVER] Scheduler đã khởi động');
 });
 
 // Đăng ký webhook URL với Telegram API

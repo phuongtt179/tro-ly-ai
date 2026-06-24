@@ -139,4 +139,86 @@ async function deleteJournal(userId, data) {
   return `🗑 Đã xóa nhật ký:\n\n"${match.content}"`;
 }
 
-module.exports = { createJournal, getJournal, updateJournal, deleteJournal };
+/**
+ * Tìm nhật ký theo từ khóa và khoảng thời gian
+ */
+async function searchJournal(userId, data) {
+  const { keyword, period, month, year, day, week } = data;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  let startDate, endDate;
+
+  // Xác định khoảng thời gian
+  if (period === 'today') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
+  } else if (period === 'yesterday') {
+    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 1);
+  } else if (period === 'week' || week === 'this') {
+    const dayOfWeek = now.getDay() || 7;
+    startDate = new Date(now);
+    startDate.setDate(now.getDate() - dayOfWeek + 2);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 7);
+  } else if (week === 'next') {
+    const dayOfWeek = now.getDay() || 7;
+    startDate = new Date(now);
+    startDate.setDate(now.getDate() - dayOfWeek + 9);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 7);
+  } else if (month) {
+    const y = year || currentYear;
+    startDate = new Date(y, month - 1, 1);
+    endDate = new Date(y, month, 1);
+  } else if (year) {
+    startDate = new Date(year, 0, 1);
+    endDate = new Date(year + 1, 0, 1);
+  } else {
+    startDate = new Date(currentYear, now.getMonth(), 1);
+    endDate = new Date(currentYear, now.getMonth() + 1, 1);
+  }
+
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  const journals = await queryDocs(userId, 'journals', [], { field: 'createdAt', direction: 'desc' }, 200);
+
+  let results = journals.filter((j) => {
+    const jDate = j.createdAt?.split('T')[0] || '';
+    return jDate >= startStr && jDate < endStr;
+  });
+
+  if (keyword) {
+    const keywordLower = keyword.toLowerCase();
+    results = results.filter((j) => j.content.toLowerCase().includes(keywordLower));
+  }
+
+  if (results.length === 0) {
+    return `❌ Không tìm thấy nhật ký nào phù hợp`;
+  }
+
+  let periodText = '';
+  if (period === 'today') periodText = 'hôm nay';
+  else if (period === 'yesterday') periodText = 'hôm qua';
+  else if (week === 'this') periodText = 'tuần này';
+  else if (week === 'next') periodText = 'tuần tới';
+  else if (month) periodText = `tháng ${month}`;
+  else if (year) periodText = `năm ${year}`;
+
+  let output = `📌 Tìm NK${keyword ? ` "${keyword}"` : ''} ${periodText}: (Tìm thấy ${results.length} NK)\n\n`;
+
+  results.forEach((j) => {
+    const date = new Date(j.createdAt).toLocaleDateString('vi-VN');
+    output += `📅 ${date} - ${j.content.substring(0, 60)}${j.content.length > 60 ? '...' : ''}\n`;
+  });
+
+  return output;
+}
+
+module.exports = { createJournal, getJournal, updateJournal, deleteJournal, searchJournal };

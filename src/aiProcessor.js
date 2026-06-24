@@ -20,32 +20,20 @@ NHIỆM VỤ:
 3. Chỉ trả về JSON thuần túy, KHÔNG có markdown, KHÔNG có text giải thích
 
 DANH SÁCH INTENT:
-- create_journal: Ghi nhật ký, ghi lại cảm xúc/sự kiện hôm nay
-- get_journal: Xem lại nhật ký cũ
+NK - NHẬT KÝ:
+- create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc)
+- get_journal: Xem nhật ký (hôm nay, hôm qua, khoảng ngày)
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
-- search_history: Tìm kiếm lịch sử hoạt động (nhật ký + task đã hoàn thành) theo từ khóa hoặc ngày
-- create_task: Tạo công việc cần làm. Dùng khi người dùng nói về 1 hoạt động/công việc cụ thể, kể cả khi có giờ đứng trước (vd: "15h họp hội đồng", "8h mai soạn giáo án"). Nếu có giờ, hệ thống sẽ tự tạo nhắc việc.
-- update_task: Cập nhật công việc (nội dung, ưu tiên, deadline)
-- delete_task: Xóa công việc
-- complete_task: Đánh dấu hoàn thành công việc (task thông thường)
-- list_tasks_today: Xem danh sách việc hôm nay
-- list_tasks_week: Xem danh sách việc tuần này
-- create_reminder: CHỈ dùng khi người dùng nói rõ "nhắc tôi", "nhắc mình", "nhớ nhắc" — là những việc vặt chỉ cần thông báo, không cần theo dõi (uống thuốc, sạc xe, gọi điện...)
-- update_reminder: Sửa nhắc việc (thời gian hoặc nội dung)
-- delete_reminder: Xóa nhắc việc
-- list_reminders: Xem danh sách nhắc việc
-- today_overview: Tổng quan hôm nay (task + lịch công tác + reminder)
-- tomorrow_overview: Tổng quan ngày mai
-- week_overview: Tổng quan tuần này
-- create_plan: Tạo kế hoạch dài hạn
-- delete_plan: Xóa kế hoạch
-- create_schedule: Nhập lịch công tác (1 hoặc nhiều việc có ngày trong tuần)
-- add_schedule: Thêm 1 việc vào lịch công tác
-- list_schedule: Xem lịch công tác (hôm nay/ngày mai/tuần này/tuần tới)
-- update_schedule: Sửa 1 việc trong lịch công tác
-- delete_schedule: Xóa 1 việc khỏi lịch công tác
-- complete_schedule: Đánh dấu hoàn thành việc trong lịch công tác
+- search_journal: Tìm nhật ký theo từ khóa hoặc khoảng thời gian (tuần, tháng, năm)
+
+TL - TÀI LIỆU:
+- create_document: Lưu tài liệu (dùng khi gõ "TL ..." hoặc gửi file/link). Phân loại: type (text|link|file), category (giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác)
+- get_documents: Xem danh sách tất cả tài liệu hoặc theo danh mục
+- search_document: Tìm tài liệu theo từ khóa hoặc danh mục
+- delete_document: Xóa tài liệu
+
+UNKNOWN:
 - unknown: Không xác định được intent
 
 FORMAT OUTPUT (JSON CHUẨN):
@@ -53,120 +41,64 @@ FORMAT OUTPUT (JSON CHUẨN):
   "intent": "tên_intent",
   "data": {
     "content": "nội dung chính",
-    "time": "HH:MM (nếu có)",
-    "date": "today|tomorrow|YYYY-MM-DD (nếu có)",
-    "day": "thứ 2|thứ 3|thứ 4|thứ 5|thứ 6|thứ 7|chủ nhật (nếu có)",
-    "week": "this|next (mặc định next nếu nói tuần tới)",
-    "priority": "high|medium|low (nếu có)",
-    "tags": ["tag1", "tag2"],
-    "title": "tiêu đề (nếu là plan)",
+    "keyword": "từ khóa tìm kiếm",
+    "period": "today|yesterday|week|month|year",
+    "month": "số tháng (1-12)",
+    "year": "năm",
+    "date": "today|yesterday|tomorrow|YYYY-MM-DD",
+    "day": "thứ 2|thứ 3|thứ 4|thứ 5|thứ 6|thứ 7|chủ nhật",
+    "week": "this|next",
     "new_content": "nội dung mới khi sửa",
-    "note": "ghi chú thêm nếu có",
-    "period": "week|next_week|today|tomorrow (khi xem lịch)",
-    "items": [
-      {"day": "thứ 2", "content": "nội dung", "time": "HH:MM", "note": "ghi chú"},
-      {"day": "thứ 3", "content": "nội dung", "time": null, "note": null}
-    ]
+    "url": "http://... (nếu là link)",
+    "type": "text|link|file (loại tài liệu)",
+    "category": "giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác",
+    "description": "mô tả tài liệu",
+    "tags": ["tag1", "tag2"]
   }
 }
 
 VÍ DỤ:
 
-Input: "Chiều mai 3h họp tổ"
-Output: {"intent":"create_task","data":{"content":"họp tổ","time":"15:00","date":"tomorrow"}}
+NK - NHẬT KÝ:
+Input: "NK hôm nay họp mệt quá"
+Output: {"intent":"create_journal","data":{"content":"hôm nay họp mệt quá"}}
 
-Input: "15h tháo biển tên trường mầm non"
-Output: {"intent":"create_task","data":{"content":"tháo biển tên trường mầm non","time":"15:00","date":"today"}}
+Input: "Xem NK hôm nay"
+Output: {"intent":"get_journal","data":{"date":"today"}}
 
-Input: "8h mai soạn giáo án"
-Output: {"intent":"create_task","data":{"content":"soạn giáo án","time":"08:00","date":"tomorrow"}}
+Input: "Xem NK tháng 6"
+Output: {"intent":"search_journal","data":{"month":6,"period":"month"}}
 
-Input: "Nhắc tôi uống thuốc lúc 9h"
-Output: {"intent":"create_reminder","data":{"content":"uống thuốc","time":"09:00","date":"today"}}
+Input: "Tìm NK họp"
+Output: {"intent":"search_journal","data":{"keyword":"họp"}}
 
-Input: "Chiều mai 3h họp tổ nhớ nhắc tôi"
-Output: {"intent":"create_reminder","data":{"content":"họp tổ","time":"15:00","date":"tomorrow"}}
+Input: "Tìm NK tuần này"
+Output: {"intent":"search_journal","data":{"week":"this"}}
 
-Input: "Hôm nay tôi dạy học mệt quá"
-Output: {"intent":"create_journal","data":{"content":"Hôm nay tôi dạy học mệt quá"}}
+Input: "Sửa NK hôm nay thành hôm nay dạy bù hay"
+Output: {"intent":"update_journal","data":{"date":"today","new_content":"hôm nay dạy bù hay"}}
 
-Input: "Hôm nay tôi cần làm gì"
-Output: {"intent":"today_overview","data":{}}
-
-Input: "Ngày mai tôi có gì"
-Output: {"intent":"tomorrow_overview","data":{}}
-
-Input: "Xem lịch tuần tới"
-Output: {"intent":"list_schedule","data":{"period":"next_week"}}
-
-Input: "Xem lịch hôm nay"
-Output: {"intent":"list_schedule","data":{"period":"today"}}
-
-Input: "Lịch công tác tuần tới:\n- Thứ 2: họp hội đồng 7h30\n- Thứ 3: dạy bù tiết 3\n- Thứ 5: kiểm tra 1 tiết lớp 11A\n- Thứ 6: nộp báo cáo tháng"
-Output: {"intent":"create_schedule","data":{"week":"next","items":[{"day":"thứ 2","content":"họp hội đồng","time":"07:30","note":null},{"day":"thứ 3","content":"dạy bù tiết 3","time":null,"note":null},{"day":"thứ 5","content":"kiểm tra 1 tiết lớp 11A","time":null,"note":null},{"day":"thứ 6","content":"nộp báo cáo tháng","time":null,"note":null}]}}
-
-Input: "Thêm vào lịch thứ 4 tuần tới họp phụ huynh 18h"
-Output: {"intent":"add_schedule","data":{"day":"thứ 4","content":"họp phụ huynh","time":"18:00","week":"next"}}
-
-Input: "Sửa lịch họp hội đồng thành 8h"
-Output: {"intent":"update_schedule","data":{"content":"họp hội đồng","time":"08:00"}}
-
-Input: "Xóa lịch dạy bù thứ 3"
-Output: {"intent":"delete_schedule","data":{"content":"dạy bù"}}
-
-Input: "Xong việc họp hội đồng rồi"
-Output: {"intent":"complete_schedule","data":{"content":"họp hội đồng"}}
-
-Input: "Xong việc soạn giáo án rồi"
-Output: {"intent":"complete_task","data":{"content":"soạn giáo án"}}
-
-Input: "Xóa task soạn giáo án"
-Output: {"intent":"delete_task","data":{"content":"soạn giáo án"}}
-
-Input: "Đổi task soạn giáo án thành soạn bài kiểm tra"
-Output: {"intent":"update_task","data":{"content":"soạn giáo án","new_content":"soạn bài kiểm tra"}}
-
-Input: "Sửa nhật ký hôm nay thành hôm nay đi họp mệt quá"
-Output: {"intent":"update_journal","data":{"date":"today","new_content":"hôm nay đi họp mệt quá"}}
-
-Input: "Xóa nhật ký hôm qua"
+Input: "Xóa NK hôm qua"
 Output: {"intent":"delete_journal","data":{"date":"yesterday"}}
 
-Input: "Đổi nhắc sạc xe sang 14h"
-Output: {"intent":"update_reminder","data":{"content":"sạc xe","time":"14:00"}}
+TL - TÀI LIỆU:
+Input: "TL đây là công thức tính lương bình quân"
+Output: {"intent":"create_document","data":{"content":"đây là công thức tính lương bình quân","type":"text","category":"khác"}}
 
-Input: "Sửa nhắc sạc xe thành sạc máy tính"
-Output: {"intent":"update_reminder","data":{"content":"sạc xe","new_content":"sạc máy tính"}}
+Input: "TL https://example.com tài liệu tham khảo toán"
+Output: {"intent":"create_document","data":{"url":"https://example.com","description":"tài liệu tham khảo toán","type":"link","category":"tham_khảo"}}
 
-Input: "Xóa nhắc việc sạc xe điện"
-Output: {"intent":"delete_reminder","data":{"content":"sạc xe điện"}}
+Input: "Xem TL"
+Output: {"intent":"get_documents","data":{}}
 
-Input: "Xóa kế hoạch ôn thi cuối kỳ"
-Output: {"intent":"delete_plan","data":{"content":"ôn thi cuối kỳ"}}
+Input: "Tìm TL giáo án"
+Output: {"intent":"search_document","data":{"keyword":"giáo án"}}
 
-Input: "Tìm giáo án"
-Output: {"intent":"search_history","data":{"keyword":"giáo án"}}
+Input: "Tìm TL danh mục báo cáo"
+Output: {"intent":"search_document","data":{"category":"báo_cáo"}}
 
-Input: "Tìm lại việc đã làm hôm qua"
-Output: {"intent":"search_history","data":{"date":"yesterday"}}
-
-Input: "Hôm nay tôi đã làm gì?"
-Output: {"intent":"search_history","data":{"date":"today"}}
-
-Input: "Tìm nhật ký có họp"
-Output: {"intent":"search_history","data":{"keyword":"họp"}}
-
-Input: "Tìm việc giáo án hôm qua"
-Output: {"intent":"search_history","data":{"keyword":"giáo án","date":"yesterday"}}
-
-Input: "8 giờ tối nay nhắc tôi gọi điện cho phụ huynh"
-Output: {"intent":"create_reminder","data":{"content":"gọi điện cho phụ huynh","time":"20:00","date":"today"}}
-
-Input: "Nhắc tôi sạc xe lúc 13h"
-Output: {"intent":"create_reminder","data":{"content":"sạc xe","time":"13:00","date":"today"}}
-
-Input: "20h nay họp phụ huynh online"
-Output: {"intent":"create_task","data":{"content":"họp phụ huynh online","time":"20:00","date":"today"}}
+Input: "Xóa TL giáo án tuần 3"
+Output: {"intent":"delete_document","data":{"keyword":"giáo án tuần 3"}}
 
 USER INPUT: "${userMessage}"`;
 }
