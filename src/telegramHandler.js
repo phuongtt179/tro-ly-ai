@@ -18,6 +18,7 @@ async function handleUpdate(update) {
 
   const message = update.message;
   const chatId = message.chat.id;
+  const messageId = message.message_id; // Lưu message ID để reply
   const userId = String(message.from.id);
 
   console.log(`[TELEGRAM] User ${userId} sent update`);
@@ -28,7 +29,7 @@ async function handleUpdate(update) {
   try {
     // Xử lý file/photo (TL - Tài liệu) - có hoặc không có caption
     if (message.document || message.photo) {
-      return await handleFileMessage(message, chatId, userId);
+      return await handleFileMessage(message, chatId, userId, messageId);
     }
 
     // Xử lý text message (NK - Nhật ký, TL - Text, queries)
@@ -40,18 +41,18 @@ async function handleUpdate(update) {
       const normalizedText = text.toUpperCase();
       const aiResult = await processMessage(normalizedText);
       const responseText = await routeAction(aiResult, userId, chatId);
-      await sendMessage(chatId, responseText);
+      await sendMessage(chatId, responseText, { reply_to_message_id: messageId });
     }
   } catch (err) {
     console.error('[TELEGRAM] Lỗi xử lý message:', err.message);
-    await sendMessage(chatId, '❌ Có lỗi xảy ra, thử lại nhé!');
+    await sendMessage(chatId, '❌ Có lỗi xảy ra, thử lại nhé!', { reply_to_message_id: messageId });
   }
 }
 
 /**
  * Xử lý file/photo - có hoặc không có caption
  */
-async function handleFileMessage(message, chatId, userId) {
+async function handleFileMessage(message, chatId, userId, messageId) {
   try {
     const caption = message.caption?.trim() || '';
     const documentService = require('./services/documentService');
@@ -108,10 +109,10 @@ async function handleFileMessage(message, chatId, userId) {
     console.log(`[FILE] Creating document:`, data);
     const responseText = await documentService.createDocument(userId, data);
     console.log(`[FILE] Response:`, responseText);
-    await sendMessage(chatId, responseText);
+    await sendMessage(chatId, responseText, { reply_to_message_id: messageId });
   } catch (err) {
     console.error('[FILE] Lỗi xử lý file:', err.message, err.stack);
-    await sendMessage(chatId, `❌ Lỗi lưu tài liệu: ${err.message}`);
+    await sendMessage(chatId, `❌ Lỗi lưu tài liệu: ${err.message}`, { reply_to_message_id: messageId });
   }
 }
 
