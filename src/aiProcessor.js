@@ -83,6 +83,15 @@ Output: {"intent":"search_journal","data":{"keyword":"họp"}}
 Input: "TÌM NK TUẦN NÀY"
 Output: {"intent":"search_journal","data":{"week":"this"}}
 
+Input: "TÌM NK THÁNG 6"
+Output: {"intent":"search_journal","data":{"month":6}}
+
+Input: "XEM NK"
+Output: {"intent":"get_journal","data":{"date":"today"}}
+
+Input: "XEM NK THÁNG 6"
+Output: {"intent":"search_journal","data":{"month":6}}
+
 Input: "SỬA NK HÔM NAY THÀNH HÔM NAY DẠY BÙ HAY"
 Output: {"intent":"update_journal","data":{"date":"today","new_content":"hôm nay dạy bù hay"}}
 
