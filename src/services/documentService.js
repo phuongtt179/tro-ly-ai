@@ -77,7 +77,17 @@ async function getDocuments(userId, data) {
   docs.forEach((doc, idx) => {
     const date = new Date(doc.createdAt.toDate()).toLocaleDateString('vi-VN');
     const typeIcon = doc.type === 'file' ? '📄' : doc.type === 'link' ? '🔗' : '📝';
-    const fileType = doc.file_type ? ` [${doc.file_type.toUpperCase()}]` : '';
+
+    // Rút gọn MIME type thành extension
+    let fileType = '';
+    if (doc.file_type) {
+      let ext = doc.file_type.split('/').pop()?.split('+')[0] || 'file';
+      if (ext.includes('wordprocessingml')) ext = 'docx';
+      if (ext.includes('spreadsheetml')) ext = 'xlsx';
+      if (ext.includes('presentationml')) ext = 'pptx';
+      fileType = ` [${ext.toUpperCase()}]`;
+    }
+
     const desc = doc.description || doc.content?.substring(0, 40) || 'Không có mô tả';
 
     result += `${typeIcon} ${desc}${fileType} - ${date}\n`;
@@ -124,7 +134,17 @@ async function searchDocument(userId, data) {
   results.forEach((doc) => {
     const date = new Date(doc.createdAt.toDate()).toLocaleDateString('vi-VN');
     const typeIcon = doc.type === 'file' ? '📄' : doc.type === 'link' ? '🔗' : '📝';
-    const fileType = doc.file_type ? ` [${doc.file_type.toUpperCase()}]` : '';
+
+    // Rút gọn MIME type thành extension
+    let fileType = '';
+    if (doc.file_type) {
+      let ext = doc.file_type.split('/').pop()?.split('+')[0] || 'file';
+      if (ext.includes('wordprocessingml')) ext = 'docx';
+      if (ext.includes('spreadsheetml')) ext = 'xlsx';
+      if (ext.includes('presentationml')) ext = 'pptx';
+      fileType = ` [${ext.toUpperCase()}]`;
+    }
+
     const desc = doc.description || doc.content?.substring(0, 40) || 'Không có mô tả';
 
     output += `${typeIcon} ${desc}${fileType} - ${date}\n`;
