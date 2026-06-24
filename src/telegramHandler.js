@@ -86,8 +86,9 @@ async function handleFileMessage(message, chatId, userId) {
       console.log(`[FILE] No caption, using filename: "${description}"`);
     }
 
-    // Gửi cho Gemini phân loại dựa trên mô tả
-    const textToAnalyze = `TL ${description}`;
+    // Gửi cho Gemini phân loại dựa trên mô tả (normalize thành lowercase)
+    const normalizedDesc = description.toLowerCase();
+    const textToAnalyze = `TL ${normalizedDesc}`;
     console.log(`[FILE] Analyzing with Gemini: "${textToAnalyze}"`);
     const aiResult = await processMessage(textToAnalyze);
     console.log(`[FILE] Gemini result:`, aiResult);
