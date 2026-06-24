@@ -20,8 +20,12 @@ NHIỆM VỤ:
 3. Chỉ trả về JSON thuần túy, KHÔNG có markdown, KHÔNG có text giải thích
 
 DANH SÁCH INTENT:
-NK - NHẬT KÝ (prefix: "NK" hoặc không có prefix nhưng là kể sự kiện/cảm xúc):
-- create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc hàng ngày)
+NK - NHẬT KÝ (prefix: "NK" hoặc bất kỳ text mà là kể sự kiện/cảm xúc/hoạt động):
+- create_journal: Ghi nhật ký - LÀ bất kỳ input nào bắt đầu "NK" hoặc mô tả hoạt động/cảm xúc hàng ngày
+  * "NK hôm nay họp mệt" → ghi NK
+  * "NK hoàn thành game" → ghi NK
+  * "NK đi dạo công viên" → ghi NK
+  * "Dạy học bài mệt" → ghi NK (không cần prefix)
 - get_journal: Xem nhật ký một ngày cụ thể (hôm nay, hôm qua, YYYY-MM-DD)
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
