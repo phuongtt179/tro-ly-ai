@@ -26,8 +26,8 @@ async function handleUpdate(update) {
   await sendChatAction(chatId, 'typing');
 
   try {
-    // Xử lý file/photo + caption (TL - Tài liệu)
-    if ((message.document || message.photo) && message.caption) {
+    // Xử lý file/photo (TL - Tài liệu) - có hoặc không có caption
+    if (message.document || message.photo) {
       return await handleFileMessage(message, chatId, userId);
     }
 
@@ -47,16 +47,10 @@ async function handleUpdate(update) {
 }
 
 /**
- * Xử lý file/photo + caption
+ * Xử lý file/photo - có hoặc không có caption
  */
 async function handleFileMessage(message, chatId, userId) {
   const caption = message.caption?.trim() || '';
-
-  // Phải bắt đầu bằng "TL" để lưu tài liệu
-  if (!caption.toUpperCase().startsWith('TL')) {
-    await sendMessage(chatId, '💡 Gõ "TL ..." trước file để lưu thành tài liệu');
-    return;
-  }
 
   let fileId, fileName, fileType, fileSize;
 
@@ -74,10 +68,20 @@ async function handleFileMessage(message, chatId, userId) {
     fileSize = 0;
   }
 
-  // Lấy phần mô tả từ caption (bỏ "TL ")
-  const description = caption.substring(2).trim();
+  // Nếu có caption bắt đầu bằng "TL", lấy phần mô tả
+  // Nếu không có caption, dùng file name làm mô tả
+  let description = '';
+  if (caption.toUpperCase().startsWith('TL')) {
+    description = caption.substring(2).trim();
+  } else if (caption) {
+    // Nếu có caption nhưng không bắt đầu bằng TL, dùng caption làm mô tả
+    description = caption;
+  } else {
+    // Không có caption, dùng file name
+    description = fileName;
+  }
 
-  // Gửi cùng với caption để Gemini phân loại
+  // Gửi cho Gemini phân loại dựa trên mô tả
   const textToAnalyze = `TL ${description}`;
   const aiResult = await processMessage(textToAnalyze);
 
