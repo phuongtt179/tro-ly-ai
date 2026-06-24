@@ -50,55 +50,66 @@ async function handleUpdate(update) {
  * Xử lý file/photo - có hoặc không có caption
  */
 async function handleFileMessage(message, chatId, userId) {
-  const caption = message.caption?.trim() || '';
+  try {
+    const caption = message.caption?.trim() || '';
+    const documentService = require('./services/documentService');
 
-  let fileId, fileName, fileType, fileSize;
+    let fileId, fileName, fileType, fileSize;
 
-  // Lấy file info từ document hoặc photo
-  if (message.document) {
-    fileId = message.document.file_id;
-    fileName = message.document.file_name || 'Tài liệu';
-    fileType = message.document.mime_type?.split('/').pop() || 'doc';
-    fileSize = message.document.file_size;
-  } else if (message.photo) {
-    const photoArray = message.photo;
-    fileId = photoArray[photoArray.length - 1].file_id; // Hình ảnh chất lượng cao nhất
-    fileName = 'Hình ảnh';
-    fileType = 'jpg';
-    fileSize = 0;
+    // Lấy file info từ document hoặc photo
+    if (message.document) {
+      fileId = message.document.file_id;
+      fileName = message.document.file_name || 'Tài liệu';
+      fileType = message.document.mime_type?.split('/').pop() || 'doc';
+      fileSize = message.document.file_size;
+      console.log(`[FILE] Document: ${fileName} (${fileType}, ${fileSize} bytes)`);
+    } else if (message.photo) {
+      const photoArray = message.photo;
+      fileId = photoArray[photoArray.length - 1].file_id;
+      fileName = 'Hình ảnh';
+      fileType = 'jpg';
+      fileSize = 0;
+      console.log(`[FILE] Photo received`);
+    }
+
+    // Nếu có caption bắt đầu bằng "TL", lấy phần mô tả
+    // Nếu không có caption, dùng file name làm mô tả
+    let description = '';
+    if (caption.toUpperCase().startsWith('TL')) {
+      description = caption.substring(2).trim();
+      console.log(`[FILE] Caption with TL prefix: "${description}"`);
+    } else if (caption) {
+      description = caption;
+      console.log(`[FILE] Caption without TL: "${description}"`);
+    } else {
+      description = fileName;
+      console.log(`[FILE] No caption, using filename: "${description}"`);
+    }
+
+    // Gửi cho Gemini phân loại dựa trên mô tả
+    const textToAnalyze = `TL ${description}`;
+    console.log(`[FILE] Analyzing with Gemini: "${textToAnalyze}"`);
+    const aiResult = await processMessage(textToAnalyze);
+    console.log(`[FILE] Gemini result:`, aiResult);
+
+    // Thêm file info vào data
+    const data = {
+      ...aiResult.data,
+      type: 'file',
+      file_id: fileId,
+      file_name: fileName,
+      file_type: fileType,
+      file_size: fileSize,
+    };
+
+    console.log(`[FILE] Creating document:`, data);
+    const responseText = await documentService.createDocument(userId, data);
+    console.log(`[FILE] Response:`, responseText);
+    await sendMessage(chatId, responseText);
+  } catch (err) {
+    console.error('[FILE] Lỗi xử lý file:', err.message, err.stack);
+    await sendMessage(chatId, `❌ Lỗi lưu tài liệu: ${err.message}`);
   }
-
-  // Nếu có caption bắt đầu bằng "TL", lấy phần mô tả
-  // Nếu không có caption, dùng file name làm mô tả
-  let description = '';
-  if (caption.toUpperCase().startsWith('TL')) {
-    description = caption.substring(2).trim();
-  } else if (caption) {
-    // Nếu có caption nhưng không bắt đầu bằng TL, dùng caption làm mô tả
-    description = caption;
-  } else {
-    // Không có caption, dùng file name
-    description = fileName;
-  }
-
-  // Gửi cho Gemini phân loại dựa trên mô tả
-  const textToAnalyze = `TL ${description}`;
-  const aiResult = await processMessage(textToAnalyze);
-
-  // Thêm file info vào data
-  const data = {
-    ...aiResult.data,
-    type: 'file',
-    file_id: fileId,
-    file_name: fileName,
-    file_type: fileType,
-    file_size: fileSize,
-  };
-
-  // Gọi documentService.createDocument
-  const documentService = require('./services/documentService');
-  const responseText = await documentService.createDocument(userId, data);
-  await sendMessage(chatId, responseText);
 }
 
 /**
