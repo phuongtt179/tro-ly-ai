@@ -36,7 +36,9 @@ async function handleUpdate(update) {
       const text = message.text.trim();
       console.log(`[TELEGRAM] User ${userId}: "${text}"`);
 
-      const aiResult = await processMessage(text);
+      // Convert input to uppercase để Gemini parse dễ hơn
+      const normalizedText = text.toUpperCase();
+      const aiResult = await processMessage(normalizedText);
       const responseText = await routeAction(aiResult, userId, chatId);
       await sendMessage(chatId, responseText);
     }
@@ -86,8 +88,8 @@ async function handleFileMessage(message, chatId, userId) {
       console.log(`[FILE] No caption, using filename: "${description}"`);
     }
 
-    // Gửi cho Gemini phân loại dựa trên mô tả (normalize thành lowercase)
-    const normalizedDesc = description.toLowerCase();
+    // Gửi cho Gemini phân loại dựa trên mô tả (normalize thành UPPERCASE)
+    const normalizedDesc = description.toUpperCase();
     const textToAnalyze = `TL ${normalizedDesc}`;
     console.log(`[FILE] Analyzing with Gemini: "${textToAnalyze}"`);
     const aiResult = await processMessage(textToAnalyze);

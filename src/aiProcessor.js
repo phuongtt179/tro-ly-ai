@@ -20,14 +20,14 @@ NHIỆM VỤ:
 3. Chỉ trả về JSON thuần túy, KHÔNG có markdown, KHÔNG có text giải thích
 
 DANH SÁCH INTENT:
-NK - NHẬT KÝ (prefix: "NK", "nk", "Nk", hoặc không có prefix nhưng là kể sự kiện/cảm xúc):
+NK - NHẬT KÝ (prefix: "NK" hoặc không có prefix nhưng là kể sự kiện/cảm xúc):
 - create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc hàng ngày)
 - get_journal: Xem nhật ký (hôm nay, hôm qua, khoảng ngày)
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
 - search_journal: Tìm nhật ký theo từ khóa hoặc khoảng thời gian (tuần, tháng, năm)
 
-TL - TÀI LIỆU (prefix: "TL", "tl", "Tl", hoặc là lưu link/ghi chú lâu dài):
+TL - TÀI LIỆU (prefix: "TL" hoặc là lưu link/ghi chú lâu dài):
 - create_document: Lưu tài liệu (dùng khi gõ "TL ..." hoặc gửi file/link). Phân loại: type (text|link|file), category (giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác)
 - get_documents: Xem danh sách tất cả tài liệu hoặc theo danh mục
 - search_document: Tìm tài liệu theo từ khóa hoặc danh mục
@@ -35,6 +35,8 @@ TL - TÀI LIỆU (prefix: "TL", "tl", "Tl", hoặc là lưu link/ghi chú lâu d
 
 UNKNOWN:
 - unknown: Không xác định được intent
+
+LƯU Ý: Input từ user sẽ được chuẩn hóa (chuyển UPPERCASE) trước khi gửi tới bạn.
 
 FORMAT OUTPUT (JSON CHUẨN):
 {
@@ -60,59 +62,53 @@ FORMAT OUTPUT (JSON CHUẨN):
 VÍ DỤ:
 
 NK - NHẬT KÝ:
-Input: "NK hôm nay họp mệt quá"
+Input: "NK HÔM NAY HỌP MỆT QUÁ"
 Output: {"intent":"create_journal","data":{"content":"hôm nay họp mệt quá"}}
 
-Input: "nk dạy tin có nhi mỏi vào"
+Input: "NK DẠY TIN CÓ NHI MỎI VÀO"
 Output: {"intent":"create_journal","data":{"content":"dạy tin có nhi mỏi vào"}}
 
-Input: "Dạy học bài mệt"
+Input: "DẠY HỌC BÀI MỆT"
 Output: {"intent":"create_journal","data":{"content":"Dạy học bài mệt"}}
 
-Input: "Xem NK hôm nay"
+Input: "XEM NK HÔM NAY"
 Output: {"intent":"get_journal","data":{"date":"today"}}
 
-Input: "Xem NK tháng 6"
+Input: "XEM NK THÁNG 6"
 Output: {"intent":"search_journal","data":{"month":6,"period":"month"}}
 
-Input: "Tìm NK họp"
+Input: "TÌM NK HỌP"
 Output: {"intent":"search_journal","data":{"keyword":"họp"}}
 
-Input: "Tìm NK tuần này"
+Input: "TÌM NK TUẦN NÀY"
 Output: {"intent":"search_journal","data":{"week":"this"}}
 
-Input: "Sửa NK hôm nay thành hôm nay dạy bù hay"
+Input: "SỬA NK HÔM NAY THÀNH HÔM NAY DẠY BÙ HAY"
 Output: {"intent":"update_journal","data":{"date":"today","new_content":"hôm nay dạy bù hay"}}
 
-Input: "Xóa NK hôm qua"
+Input: "XÓA NK HÔM QUA"
 Output: {"intent":"delete_journal","data":{"date":"yesterday"}}
 
 TL - TÀI LIỆU:
-Input: "TL đây là công thức tính lương bình quân"
+Input: "TL ĐÂY LÀ CÔNG THỨC TÍNH LƯƠNG BÌNH QUÂN"
 Output: {"intent":"create_document","data":{"content":"đây là công thức tính lương bình quân","type":"text","category":"khác"}}
 
-Input: "tl https://example.com tài liệu tham khảo toán"
+Input: "TL HTTPS://EXAMPLE.COM TÀI LIỆU THAM KHẢO TOÁN"
 Output: {"intent":"create_document","data":{"url":"https://example.com","description":"tài liệu tham khảo toán","type":"link","category":"tham_khảo"}}
 
-Input: "tl ghi chú công thức tính lương"
+Input: "TL GHI CHÚ CÔNG THỨC TÍNH LƯƠNG"
 Output: {"intent":"create_document","data":{"content":"ghi chú công thức tính lương","type":"text","category":"khác"}}
 
-Input: "Xem TL"
+Input: "XEM TL"
 Output: {"intent":"get_documents","data":{}}
 
-Input: "xem tl"
-Output: {"intent":"get_documents","data":{}}
-
-Input: "Tìm TL giáo án"
+Input: "TÌM TL GIÁO ÁN"
 Output: {"intent":"search_document","data":{"keyword":"giáo án"}}
 
-Input: "tìm tl giáo án"
-Output: {"intent":"search_document","data":{"keyword":"giáo án"}}
-
-Input: "Tìm TL danh mục báo cáo"
+Input: "TÌM TL DANH MỤC BÁO CÁO"
 Output: {"intent":"search_document","data":{"category":"báo_cáo"}}
 
-Input: "Xóa TL giáo án tuần 3"
+Input: "XÓA TL GIÁO ÁN TUẦN 3"
 Output: {"intent":"delete_document","data":{"keyword":"giáo án tuần 3"}}
 
 USER INPUT: "${userMessage}"`;
