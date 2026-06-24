@@ -20,14 +20,14 @@ NHIỆM VỤ:
 3. Chỉ trả về JSON thuần túy, KHÔNG có markdown, KHÔNG có text giải thích
 
 DANH SÁCH INTENT:
-NK - NHẬT KÝ:
-- create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc)
+NK - NHẬT KÝ (prefix: "NK", "nk", "Nk", hoặc không có prefix nhưng là kể sự kiện/cảm xúc):
+- create_journal: Ghi nhật ký (dùng khi gõ "NK ..." hoặc kể lại sự kiện/cảm xúc hàng ngày)
 - get_journal: Xem nhật ký (hôm nay, hôm qua, khoảng ngày)
 - update_journal: Sửa nội dung nhật ký
 - delete_journal: Xóa nhật ký
 - search_journal: Tìm nhật ký theo từ khóa hoặc khoảng thời gian (tuần, tháng, năm)
 
-TL - TÀI LIỆU:
+TL - TÀI LIỆU (prefix: "TL", "tl", "Tl", hoặc là lưu link/ghi chú lâu dài):
 - create_document: Lưu tài liệu (dùng khi gõ "TL ..." hoặc gửi file/link). Phân loại: type (text|link|file), category (giáo_án|báo_cáo|tham_khảo|link|hình_ảnh|khác)
 - get_documents: Xem danh sách tất cả tài liệu hoặc theo danh mục
 - search_document: Tìm tài liệu theo từ khóa hoặc danh mục
@@ -63,6 +63,12 @@ NK - NHẬT KÝ:
 Input: "NK hôm nay họp mệt quá"
 Output: {"intent":"create_journal","data":{"content":"hôm nay họp mệt quá"}}
 
+Input: "nk dạy tin có nhi mỏi vào"
+Output: {"intent":"create_journal","data":{"content":"dạy tin có nhi mỏi vào"}}
+
+Input: "Dạy học bài mệt"
+Output: {"intent":"create_journal","data":{"content":"Dạy học bài mệt"}}
+
 Input: "Xem NK hôm nay"
 Output: {"intent":"get_journal","data":{"date":"today"}}
 
@@ -85,7 +91,7 @@ TL - TÀI LIỆU:
 Input: "TL đây là công thức tính lương bình quân"
 Output: {"intent":"create_document","data":{"content":"đây là công thức tính lương bình quân","type":"text","category":"khác"}}
 
-Input: "TL https://example.com tài liệu tham khảo toán"
+Input: "tl https://example.com tài liệu tham khảo toán"
 Output: {"intent":"create_document","data":{"url":"https://example.com","description":"tài liệu tham khảo toán","type":"link","category":"tham_khảo"}}
 
 Input: "Xem TL"
