@@ -29,13 +29,15 @@ async function routeAction(aiResult, userId, chatId) {
 
     // === TL - TÀI LIỆU ===
     case 'create_document':
-      return await documentService.createDocument(userId, data);
+      const createResult = await documentService.createDocument(userId, data);
+      return { text: createResult, documents: [] };
     case 'get_documents':
       return await documentService.getDocuments(userId, data);
     case 'search_document':
       return await documentService.searchDocument(userId, data);
     case 'delete_document':
-      return await documentService.deleteDocument(userId, data);
+      const deleteResult = await documentService.deleteDocument(userId, data);
+      return { text: deleteResult, documents: [] };
 
     // === KHÔNG XÁC ĐỊNH ===
     case 'unknown':

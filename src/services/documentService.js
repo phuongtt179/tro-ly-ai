@@ -30,6 +30,7 @@ async function createDocument(userId, data) {
     file_name: data.file_name || null,
     file_type: data.file_type || null,
     file_size: data.file_size || null,
+    source_message_id: data.source_message_id || null,
   };
 
   await addDoc(userId, 'documents', doc);
@@ -69,7 +70,8 @@ async function getDocuments(userId, data) {
   const docs = await queryDocs(userId, 'documents', filters, { field: 'createdAt', direction: 'desc' }, limit);
 
   if (docs.length === 0) {
-    return category ? `❌ Không tìm thấy tài liệu nào trong danh mục "${category}"` : '❌ Chưa có tài liệu nào';
+    const errorMsg = category ? `❌ Không tìm thấy tài liệu nào trong danh mục "${category}"` : '❌ Chưa có tài liệu nào';
+    return { text: errorMsg, documents: [] };
   }
 
   let result = `📌 Danh sách tài liệu${category ? ` (${category})` : ''}: (Tìm thấy ${docs.length} TL)\n\n`;
@@ -93,7 +95,7 @@ async function getDocuments(userId, data) {
     result += `${typeIcon} ${desc}${fileType} - ${date}\n`;
   });
 
-  return result;
+  return { text: result, documents: docs };
 }
 
 /**
@@ -126,7 +128,7 @@ async function searchDocument(userId, data) {
   }
 
   if (results.length === 0) {
-    return `❌ Không tìm thấy tài liệu nào phù hợp với "${keyword}"`;
+    return { text: `❌ Không tìm thấy tài liệu nào phù hợp với "${keyword}"`, documents: [] };
   }
 
   let output = `📌 Tìm TL ${keyword ? `"${keyword}"` : 'tháng này'}: (Tìm thấy ${results.length} TL)\n\n`;
@@ -150,7 +152,7 @@ async function searchDocument(userId, data) {
     output += `${typeIcon} ${desc}${fileType} - ${date}\n`;
   });
 
-  return output;
+  return { text: output, documents: results };
 }
 
 /**
