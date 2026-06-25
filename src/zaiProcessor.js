@@ -7,7 +7,7 @@
 const axios = require('axios');
 
 const ZAI_API_KEY = process.env.ZAI_API_KEY;
-const ZAI_URL = 'https://api.z.ai/api/paas/v4/chat/completions';
+const ZAI_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const ZAI_MODEL = 'glm-4-flash';
 
 /**
@@ -223,7 +223,7 @@ async function processMessage(userMessage) {
 
     return result;
   } catch (err) {
-    console.error('[ZAI] Lỗi gọi Z.AI:', err.message);
+    console.error('[ZAI] Lỗi gọi Z.AI:', err.message, err.response?.data);
     return {
       intent: 'unknown',
       data: { content: userMessage },
