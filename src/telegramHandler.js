@@ -4,7 +4,7 @@
  */
 
 const axios = require('axios');
-const { processMessage } = require('./aiProcessor');
+const { processMessage } = require('./zaiProcessor');
 const { routeAction } = require('./actionRouter');
 const { getDocById } = require('./firebaseService');
 
@@ -107,9 +107,9 @@ async function handleFileMessage(message, chatId, userId, messageId) {
 
     const normalizedDesc = description.toUpperCase();
     const textToAnalyze = `TL ${normalizedDesc}`;
-    console.log(`[FILE] Analyzing with Gemini: "${textToAnalyze}"`);
+    console.log(`[FILE] Analyzing with Z.AI: "${textToAnalyze}"`);
     const aiResult = await processMessage(textToAnalyze);
-    console.log(`[FILE] Gemini result:`, aiResult);
+    console.log(`[FILE] Z.AI result:`, aiResult);
 
     const data = {
       ...aiResult.data,
