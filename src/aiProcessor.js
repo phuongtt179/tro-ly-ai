@@ -6,7 +6,7 @@
 const axios = require('axios');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
 /**
  * Tạo prompt gửi cho Gemini
@@ -138,10 +138,171 @@ Output: {"intent":"delete_document","data":{"keyword":"giáo án tuần 3"}}
 USER INPUT: "${userMessage}"`;
 }
 
+// ============================================================
+// PRE-PROCESSING: Xử lý trực tiếp các lệnh rõ ràng, không cần AI
+// userMessage đã được toUpperCase() từ telegramHandler
+// ============================================================
+
+function preProcess(msg) {
+  msg = msg.trim();
+
+  // ── NK: GHI nhật ký ──────────────────────────────────────
+  if (/^NK\s+/.test(msg)) {
+    return { intent: 'create_journal', data: { content: msg.slice(msg.indexOf(' ')).trim().toLowerCase() } };
+  }
+
+  // ── NK: XÓA nhật ký ──────────────────────────────────────
+  if (/^X[ÓO]A\s+NK/.test(msg)) {
+    const rest = msg.replace(/^X[ÓO]A\s+NK\s*/, '').trim();
+    return { intent: 'delete_journal', data: { date: parseDateStr(rest) || 'today' } };
+  }
+
+  // ── NK: SỬA nhật ký ──────────────────────────────────────
+  if (/^(S[ỬU]A|C[ẬA]P\s+NH[ẬA]T)\s+NK/.test(msg)) {
+    const thanhIdx = msg.indexOf(' THÀNH ');
+    if (thanhIdx > -1) {
+      const prefixEnd = msg.match(/^(S[ỬU]A|C[ẬA]P\s+NH[ẬA]T)\s+NK\s*/)[0].length;
+      const datePart = msg.slice(prefixEnd, thanhIdx).trim();
+      const newContent = msg.slice(thanhIdx + 7).trim().toLowerCase();
+      return { intent: 'update_journal', data: { date: parseDateStr(datePart) || 'today', new_content: newContent } };
+    }
+  }
+
+  // ── NK: XEM nhật ký ──────────────────────────────────────
+  const xemNk = msg.match(/^XEM\s+NK\s*/);
+  if (xemNk) {
+    const rest = msg.slice(xemNk[0].length).trim();
+    if (!rest || rest === 'HÔM NAY') return { intent: 'get_journal', data: { date: 'today' } };
+    if (rest === 'HÔM QUA')          return { intent: 'get_journal', data: { date: 'yesterday' } };
+    if (rest === 'NGÀY MAI')         return { intent: 'get_journal', data: { date: 'tomorrow' } };
+    // XEM NK NGÀY DD/MM
+    const ngay = rest.match(/^NG[ÀA]Y\s+(\d{1,2})[\/\-](\d{1,2})/);
+    if (ngay) {
+      const y = new Date().getFullYear();
+      return { intent: 'get_journal', data: { date: `${y}-${ngay[2].padStart(2,'0')}-${ngay[1].padStart(2,'0')}` } };
+    }
+    // XEM NK THÁNG/TUẦN/NĂM → search_journal
+    return { intent: 'search_journal', data: parsePeriodData(rest) };
+  }
+
+  // ── NK: TÌM nhật ký ──────────────────────────────────────
+  const timNk = msg.match(/^T[ÌI]M\s+NK\s*/);
+  if (timNk) {
+    const rest = msg.slice(timNk[0].length).trim();
+    return { intent: 'search_journal', data: parseSearchJournalData(rest) };
+  }
+
+  // ── TL: XEM tài liệu ─────────────────────────────────────
+  const xemTl = msg.match(/^XEM\s+TL\s*/);
+  if (xemTl || /^DANH\s+S[ÁA]CH\s+TL/.test(msg)) {
+    const rest = xemTl ? msg.slice(xemTl[0].length).trim() : '';
+    if (!rest) return { intent: 'get_documents', data: {} };
+    const category = mapCategory(rest);
+    return { intent: 'get_documents', data: category ? { category } : {} };
+  }
+
+  // ── TL: TÌM tài liệu ─────────────────────────────────────
+  const timTl = msg.match(/^T[ÌI]M\s+TL\s*/);
+  if (timTl) {
+    const rest = msg.slice(timTl[0].length).trim();
+    const danhmuc = rest.match(/^DANH\s+M[ỤU]C\s+(.*)/);
+    if (danhmuc) {
+      return { intent: 'search_document', data: { category: mapCategory(danhmuc[1]) || danhmuc[1].toLowerCase() } };
+    }
+    return { intent: 'search_document', data: { keyword: rest.toLowerCase() } };
+  }
+
+  // ── TL: XÓA tài liệu ─────────────────────────────────────
+  const xoaTl = msg.match(/^X[ÓO]A\s+TL\s*/);
+  if (xoaTl) {
+    return { intent: 'delete_document', data: { keyword: msg.slice(xoaTl[0].length).trim().toLowerCase() } };
+  }
+
+  // ── TL: LƯU tài liệu (prefix TL) ────────────────────────
+  if (/^TL\s+/.test(msg)) {
+    const content = msg.slice(3).trim();
+    const urlMatch = content.match(/HTTPS?:\/\/[^\s]+/i);
+    if (urlMatch) {
+      const url = urlMatch[0].toLowerCase();
+      const desc = content.replace(urlMatch[0], '').trim().toLowerCase();
+      return { intent: 'create_document', data: { type: 'link', url, description: desc || url, category: 'link' } };
+    }
+    const category = mapCategory(content);
+    const lower = content.toLowerCase();
+    return { intent: 'create_document', data: { type: 'text', content: lower, description: lower, category: category || 'khác' } };
+  }
+
+  return null; // Để Gemini xử lý các trường hợp mơ hồ
+}
+
+// Phân tích chuỗi ngày
+function parseDateStr(str) {
+  str = str.trim();
+  if (!str || str === 'HÔM NAY')   return 'today';
+  if (str === 'HÔM QUA')           return 'yesterday';
+  if (str === 'NGÀY MAI')          return 'tomorrow';
+  const m = str.match(/(\d{1,2})[\/\-](\d{1,2})/);
+  if (m) {
+    const y = new Date().getFullYear();
+    return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  }
+  return null;
+}
+
+// Phân tích khoảng thời gian (THÁNG/TUẦN/NĂM)
+function parsePeriodData(rest) {
+  const thangNam = rest.match(/TH[ÁA]NG\s+(\d{1,2})\s+N[ĂA]M\s+(\d{4})/);
+  if (thangNam) return { month: parseInt(thangNam[1]), year: parseInt(thangNam[2]), period: 'month' };
+  const thang = rest.match(/TH[ÁA]NG\s+(\d{1,2})/);
+  if (thang) return { month: parseInt(thang[1]), period: 'month' };
+  if (/TU[ẦA]N\s+N[ÀA]Y/.test(rest))         return { week: 'this', period: 'week' };
+  if (/TU[ẦA]N\s+TR[ƯU][ỚO]C/.test(rest))    return { week: 'last', period: 'week' };
+  if (/TU[ẦA]N\s+(SAU|T[ỚO]I)/.test(rest))   return { week: 'next', period: 'week' };
+  const nam = rest.match(/N[ĂA]M\s+(\d{4})/);
+  if (nam) return { year: parseInt(nam[1]), period: 'year' };
+  if (/^H[ÔO]M\s+QUA$/.test(rest))  return { period: 'yesterday' };
+  if (/^H[ÔO]M\s+NAY$/.test(rest))  return { period: 'today' };
+  return {};
+}
+
+// Phân tích dữ liệu tìm kiếm NK (keyword + khoảng thời gian)
+function parseSearchJournalData(rest) {
+  const data = parsePeriodData(rest);
+  const kw = rest
+    .replace(/TH[ÁA]NG\s+\d{1,2}\s+N[ĂA]M\s+\d{4}/g, '')
+    .replace(/TH[ÁA]NG\s+\d{1,2}/g, '')
+    .replace(/TU[ẦA]N\s+(N[ÀA]Y|TR[ƯU][ỚO]C|SAU|T[ỚO]I)/g, '')
+    .replace(/N[ĂA]M\s+\d{4}/g, '')
+    .replace(/H[ÔO]M\s+(NAY|QUA)/g, '')
+    .trim();
+  if (kw) data.keyword = kw.toLowerCase();
+  return data;
+}
+
+// Map tên danh mục TL
+function mapCategory(text) {
+  const u = text.toUpperCase();
+  if (/GI[ÁA]O\s*[ÁA]N/.test(u))     return 'giáo_án';
+  if (/B[ÁA]O\s*C[ÁA]O/.test(u))     return 'báo_cáo';
+  if (/THAM\s*KH[ẢA]O/.test(u))       return 'tham_khảo';
+  if (/H[ÌI]NH\s*[ẢA]NH|^[ẢA]NH/.test(u)) return 'hình_ảnh';
+  if (/HTTPS?:|WWW\./.test(u))         return 'link';
+  return null;
+}
+
+// ============================================================
+
 /**
  * Gửi message đến Gemini và nhận kết quả JSON
  */
 async function processMessage(userMessage) {
+  // Xử lý trực tiếp nếu lệnh rõ ràng — không tốn API call
+  const preResult = preProcess(userMessage);
+  if (preResult) {
+    console.log('[AI] Pre-processed:', preResult.intent);
+    return preResult;
+  }
+
   const prompt = generatePrompt(userMessage);
 
   try {
